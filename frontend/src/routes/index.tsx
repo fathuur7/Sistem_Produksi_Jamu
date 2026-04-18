@@ -2,7 +2,6 @@
 import { lazy, Suspense } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 
-// 1. Import komponen secara dinamis (Code Splitting) menggunakan React.lazy
 const Login = lazy(() => import('../pages/Login'));
 const RequestAccess = lazy(() => import('../pages/RequestAccess'));
 const ForgotPassword = lazy(() => import('../pages/ForgotPassword'));
@@ -19,8 +18,9 @@ const SearchResults = lazy(() => import('../pages/SearchResults'));
 const Notifications = lazy(() => import('../pages/Notifications'));
 const Users = lazy(() => import('../pages/Users'));
 const RecipeDetail = lazy(() => import('../pages/RecipeDetail'));
+const Cities = lazy(() => import('../pages/Cities'));
+const Benefits = lazy(() => import('../pages/Benefits'));
 
-// 2. Beri fallback (Loading Screen) saat file komponen sedang di-download oleh browser
 const LazyLoad = ({ children }: { children: React.ReactNode }) => (
   <Suspense fallback={
     <div className="flex h-screen w-full items-center justify-center">
@@ -129,6 +129,22 @@ const router = createBrowserRouter([
     ),
   },
   {
+    path: '/cities',
+    element: (
+      <LazyLoad>
+        <Cities />
+      </LazyLoad>
+    ),
+  },
+  {
+    path: '/benefits',
+    element: (
+      <LazyLoad>
+        <Benefits />
+      </LazyLoad>
+    ),
+  },
+  {
     path: '/request-access',
     element: (
       <LazyLoad>
@@ -152,7 +168,6 @@ const router = createBrowserRouter([
       </LazyLoad>
     ),
   },
-  // Route penangkap 404 (harus diurutan paling bawah)
   {
     path: '*',
     element: (

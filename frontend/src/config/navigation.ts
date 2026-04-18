@@ -9,5 +9,7 @@ export const mainNavItems = [
 
 export const adminNavItems = [
   { icon: 'manage_accounts', label: 'Direktori Staf', to: '/users' },
+  { icon: 'location_city', label: 'Data Kota', to: '/cities' },
+  { icon: 'health_and_safety', label: 'Data Khasiat', to: '/benefits' },
   { icon: 'settings', label: 'Pengaturan', to: '/settings' },
 ];
