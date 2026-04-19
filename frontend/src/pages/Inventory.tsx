@@ -19,7 +19,7 @@ export default function Inventory() {
         <div className="flex-1 lg:ml-72 flex flex-col w-full">
           <TopBar />
 
-          <main className="p-4 sm:p-8 space-y-6 max-w-[1400px] w-full pb-20">
+          <main className="p-4 sm:p-8 space-y-6 max-w-350 w-full pb-20">
             <InventoryHeader />
             <InventoryTable />
             <InventoryBento />

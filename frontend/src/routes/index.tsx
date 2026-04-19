@@ -10,6 +10,7 @@ const NotFound = lazy(() => import('../pages/NotFound'));
 const Forbidden = lazy(() => import('../pages/Forbidden'));
 const Dashboard = lazy(() => import('../pages/Dashboard'));
 const Inventory = lazy(() => import('../pages/Inventory'));
+const TambahBahan = lazy(() => import('../pages/TambahBahan'));
 const Production = lazy(() => import('../pages/Production'));
 const Recipes = lazy(() => import('../pages/Recipes'));
 const Supplier = lazy(() => import('../pages/Supplier'));
@@ -53,6 +54,14 @@ const router = createBrowserRouter([
     element: (
       <LazyLoad>
         <Inventory />
+      </LazyLoad>
+    ),
+  },
+  {
+    path: '/inventory/tambah-bahan',
+    element: (
+      <LazyLoad>
+        <TambahBahan />
       </LazyLoad>
     ),
   },

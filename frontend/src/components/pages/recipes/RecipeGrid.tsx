@@ -1,4 +1,19 @@
-const recipes = [
+
+
+interface Recipe {
+  id: number;
+  title: string;
+  category: string;
+  categoryClass: string;
+  difficulty: string;
+  difficultyIcon: string;
+  difficultyClass: string;
+  description: string;
+  ingredients: string[];
+  image: string;
+}
+
+const recipes: Recipe[] = [
   {
     id: 1,
     title: 'Kunyit Asam',
@@ -33,6 +48,42 @@ const recipes = [
     difficultyClass: 'text-on-secondary-fixed-variant',
     description: 'Pelindung fungsi hati dan peningkat nafsu makan. Menggunakan metode ekstraksi konsentrat tinggi.',
     ingredients: ['Temulawak', 'Madu Hutan', 'Jeruk Nipis'],
+    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuASJEwLV0PNcfQC8tv_nupwterehmf82iAAuLgYJReFu-Dm3rzngmIgOtlE3luhAAB-DMo2O0uIFmYYiF2LGZTv51-mhgoNUHtf3imn3zIBhODdo68Tg2QDnTdOyY9iDudhVy7ye93kPaAa-JSK05tvy1Z5O46hhZD8uAyxj-lS-JTa4FxHUp6gASkefCDt2HWibPCw8rBs4CsjDiz2vB4oGL9YKOaTu9QdjRUpF21M9lgtlI2NDDQDohqGrpgJcTxL1FqZFOeBmnLz'
+  },
+  {
+    id: 4,
+    title: 'Cabe Puyang',
+    category: 'Pegal Linu',
+    categoryClass: 'bg-primary-container text-on-primary-container',
+    difficulty: 'Mudah',
+    difficultyIcon: 'speed',
+    difficultyClass: 'text-primary',
+    description: 'Ramuan andalan untuk meredakan nyeri otot dan kelelahan setelah bekerja berat. Sangat populer di kalangan pekerja fisik.',
+    ingredients: ['Cabe Jawa', 'Lempuyang', 'Jahe Emprit'],
+    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuASJEwLV0PNcfQC8tv_nupwterehmf82iAAuLgYJReFu-Dm3rzngmIgOtlE3luhAAB-DMo2O0uIFmYYiF2LGZTv51-mhgoNUHtf3imn3zIBhODdo68Tg2QDnTdOyY9iDudhVy7ye93kPaAa-JSK05tvy1Z5O46hhZD8uAyxj-lS-JTa4FxHUp6gASkefCDt2HWibPCw8rBs4CsjDiz2vB4oGL9YKOaTu9QdjRUpF21M9lgtlI2NDDQDohqGrpgJcTxL1FqZFOeBmnLz'
+  },
+  {
+    id: 5,
+    title: 'Pahitan Brotowali',
+    category: 'Detoksifikasi',
+    categoryClass: 'bg-error-container text-on-error-container',
+    difficulty: 'Mahir',
+    difficultyIcon: 'speed',
+    difficultyClass: 'text-error',
+    description: 'Membantu pembersihan darah dan menjaga kadar gula. Membutuhkan teknik perebusan khusus untuk menyeimbangkan rasa pahitnya.',
+    ingredients: ['Sambiloto', 'Brotowali', 'Akar Alang-alang'],
+    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuASJEwLV0PNcfQC8tv_nupwterehmf82iAAuLgYJReFu-Dm3rzngmIgOtlE3luhAAB-DMo2O0uIFmYYiF2LGZTv51-mhgoNUHtf3imn3zIBhODdo68Tg2QDnTdOyY9iDudhVy7ye93kPaAa-JSK05tvy1Z5O46hhZD8uAyxj-lS-JTa4FxHUp6gASkefCDt2HWibPCw8rBs4CsjDiz2vB4oGL9YKOaTu9QdjRUpF21M9lgtlI2NDDQDohqGrpgJcTxL1FqZFOeBmnLz'
+  },
+  {
+    id: 6,
+    title: 'Kunci Sirih',
+    category: 'Kecantikan',
+    categoryClass: 'bg-primary-fixed text-on-primary-fixed-variant',
+    difficulty: 'Menengah',
+    difficultyIcon: 'speed',
+    difficultyClass: 'text-on-secondary-fixed-variant',
+    description: 'Menjaga kesehatan organ dalam dan menghilangkan bau badan. Menggunakan metode perasan daun sirih segar untuk hasil maksimal.',
+    ingredients: ['Temu Kunci', 'Daun Sirih', 'Kayu Manis'],
     image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuASJEwLV0PNcfQC8tv_nupwterehmf82iAAuLgYJReFu-Dm3rzngmIgOtlE3luhAAB-DMo2O0uIFmYYiF2LGZTv51-mhgoNUHtf3imn3zIBhODdo68Tg2QDnTdOyY9iDudhVy7ye93kPaAa-JSK05tvy1Z5O46hhZD8uAyxj-lS-JTa4FxHUp6gASkefCDt2HWibPCw8rBs4CsjDiz2vB4oGL9YKOaTu9QdjRUpF21M9lgtlI2NDDQDohqGrpgJcTxL1FqZFOeBmnLz'
   }
 ];
@@ -85,7 +136,7 @@ export default function RecipeGrid() {
       ))}
 
       {/* Card: New Recipe Placeholder */}
-      <div className="border-2 border-dashed border-outline-variant/40 rounded-xl flex flex-col items-center justify-center p-12 group cursor-pointer hover:bg-surface-container-high/30 transition-all xl:mt-6 min-h-[300px]">
+      <div className="border-2 border-dashed border-outline-variant/40 rounded-xl flex flex-col items-center justify-center p-12 group cursor-pointer hover:bg-surface-container-high/30 transition-all min-h-75">
         <div className="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-sm">
           <span className="material-symbols-outlined text-3xl text-outline">add_circle</span>
         </div>

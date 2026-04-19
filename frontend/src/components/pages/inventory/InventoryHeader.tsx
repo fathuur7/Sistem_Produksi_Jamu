@@ -1,4 +1,8 @@
-export default function InventoryHeader() {
+import { useNavigate } from 'react-router-dom';
+
+function InventoryHeader() {
+  const navigate = useNavigate();
+
   return (
     <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-end gap-6 mb-12">
       <div>
@@ -17,7 +21,9 @@ export default function InventoryHeader() {
           <span className="material-symbols-outlined text-[20px]">filter_list</span>
           Filter
         </button>
-        <button className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-5 py-3 apothecary-gradient text-on-primary font-bold rounded-xl shadow-lg shadow-primary/20 hover:scale-[0.98] active:scale-95 transition-all outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+        <button 
+          onClick={() => navigate('/inventory/tambah-bahan')}
+          className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-5 py-3 apothecary-gradient text-on-primary font-bold rounded-xl shadow-lg shadow-primary/20 hover:scale-[0.98] active:scale-95 transition-all outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
           <span className="material-symbols-outlined text-[20px]">add_circle</span>
           Tambah Bahan
         </button>
@@ -25,3 +31,5 @@ export default function InventoryHeader() {
     </div>
   );
 }
+
+export default InventoryHeader;
