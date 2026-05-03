@@ -1,8 +1,8 @@
 SISTEM PRODUKSI JAMU
 
-Sistem manajemen produksi jamu tradisional Madura berbasis web.
+Sistem manajemen data jamu tradisional Madura berbasis web.
 
-Aplikasi ini membantu mengelola resep, inventaris bahan, supplier, dan batch produksi jamu.
+Fokus fitur yang sudah disesuaikan dengan schema DB `jamu` saat ini: login, master data (kota, user, rempah, khasiat) dan data jamu + relasinya.
 
 CARA MENJALANKAN PROJECT
 
@@ -25,15 +25,25 @@ Persiapan Awal (sekali saja)
    - Klik Go
    - Tunggu sampai muncul pesan sukses
 
-4. Install Dependencies Backend
+4. Konfigurasi Backend (.env)
+   - Masuk folder backend
+   - Copy `backend/.env.example` menjadi `backend/.env`
+   - Sesuaikan `DB_HOST/DB_PORT/DB_USER/DB_PASSWORD` jika perlu (Laragon biasanya `root` tanpa password)
+
+5. Install Dependencies Backend
    Buka Command Prompt atau Terminal:
-   
+
    cd backend
    npm install
 
-5. Install Dependencies Frontend
+6. Seed Data Minimal (wajib untuk login)
+
+   cd backend
+   node scripts/seedJamuDb.js
+
+7. Install Dependencies Frontend
    Buka Command Prompt atau Terminal baru:
-   
+
    cd frontend
    npm install
 
@@ -41,19 +51,19 @@ Menjalankan Aplikasi (setiap kali mau pakai)
 
 1. Jalankan Backend Server
    Di terminal pertama:
-   
+
    cd backend
    npm run dev
-   
+
    Tunggu sampai muncul: Server berjalan di http://localhost:3000
    Jangan tutup terminal ini, biarkan tetap jalan.
 
 2. Jalankan Frontend Server
    Buka terminal baru (jangan tutup yang backend):
-   
+
    cd frontend
    npm run dev
-   
+
    Tunggu sampai muncul: Local: http://localhost:5173/
    Jangan tutup terminal ini, biarkan tetap jalan.
 
@@ -82,33 +92,35 @@ phpMyAdmin: http://localhost/phpmyadmin (untuk cek database)
 STRUKTUR PROJECT
 
 backend/
-  src/
-    routes/       Semua endpoint API
-    middleware/   JWT authentication
-    config/       Database connection
-  scripts/
-    importExcel.js  Import data dari Excel
-  .env            Konfigurasi database
+src/
+routes/ Semua endpoint API
+middleware/ JWT authentication
+config/ Database connection
+scripts/
+importExcel.js Import data dari Excel
+.env Konfigurasi database
 
 frontend/
-  src/
-    pages/        Halaman utama
-    components/   Komponen UI
-    config/       Konfigurasi routing
+src/
+pages/ Halaman utama
+components/ Komponen UI
+config/ Konfigurasi routing
 
-jamu.sql          Database schema (import ini)
-jamu206.xlsx      Data Excel (opsional)
+jamu.sql Database schema (import ini)
+jamu206.xlsx Data Excel (opsional)
 
 TEKNOLOGI YANG DIGUNAKAN
 
 Backend:
+
 - Express.js - Web framework
 - MySQL - Database
 - JWT - Authentication
-- bcryptjs - Password hashing
+- bcryptjs - Compare password (mendukung bcrypt jika sudah terlanjur ada)
 - XLSX - Import Excel
 
 Frontend:
+
 - React 19 - UI framework
 - Vite - Build tool
 - TailwindCSS - Styling
@@ -119,54 +131,30 @@ DATABASE
 Nama Database: jamu
 
 Tabel:
-- user: Admin dan staff
-- jamu: Resep/produk jamu
-- rempah: Master rempah/ingredient
-- bahan: Inventaris stok bahan baku
-- khasiat: Master khasiat
-- produsen: Supplier/pemasok
-- produksi: Batch produksi
+
+- kota: Master kota
+- user: Kredensial untuk akses sistem
+- rempah: Data master rempah
+- khasiat: Data khasiat
+- jamu: Data jamu
 - komposisi: Relasi jamu dan rempah
 - khasiat_jamu: Relasi jamu dan khasiat
-- kota: Master kota
 
 ENDPOINT API UTAMA
 
 Auth:
+
 - POST /api/auth/login - Login
 - POST /api/auth/register - Register user baru
 
-Jamu (Resep):
+Jamu:
+
 - GET /api/jamu - List semua jamu
 - GET /api/jamu/:id - Detail jamu
 - POST /api/jamu - Tambah jamu baru
-- PUT /api/jamu/:id - Update jamu
-- DELETE /api/jamu/:id - Hapus jamu
-
-Bahan (Inventaris):
-- GET /api/bahan - List semua bahan
-- GET /api/bahan/:id - Detail bahan
-- POST /api/bahan - Tambah bahan
-- PUT /api/bahan/:id - Update stok/harga
-- DELETE /api/bahan/:id - Hapus bahan
-
-Supplier (Pemasok):
-- GET /api/supplier - List supplier
-- GET /api/supplier/metrics - Statistik supplier
-- GET /api/supplier/:id - Detail supplier
-- POST /api/supplier - Tambah supplier
-- PUT /api/supplier/:id - Update supplier
-- DELETE /api/supplier/:id - Hapus supplier
-
-Produksi (Batch):
-- GET /api/produksi - List batch produksi
-- GET /api/produksi/metrics - Statistik dashboard
-- GET /api/produksi/:id - Detail batch
-- POST /api/produksi - Buat batch baru
-- PUT /api/produksi/:id - Update batch
-- DELETE /api/produksi/:id - Hapus batch
 
 Search:
+
 - GET /api/search?q=kunyit - Pencarian global
 
 TROUBLESHOOTING
@@ -176,19 +164,19 @@ Solusi: Pastikan MySQL di XAMPP/Laragon sudah Running
 
 Problem: Port 3000 already in use
 Solusi Windows:
-  netstat -ano | findstr :3000
-  taskkill /PID <nomor_PID> /F
+netstat -ano | findstr :3000
+taskkill /PID <nomor_PID> /F
 
 Problem: Port 5173 already in use
 Solusi Windows:
-  netstat -ano | findstr :5173
-  taskkill /PID <nomor_PID> /F
+netstat -ano | findstr :5173
+taskkill /PID <nomor_PID> /F
 
 Problem: vite is not recognized
 Solusi:
-  cd frontend
-  npm install
-  npm run dev
+cd frontend
+npm install
+npm run dev
 
 Problem: Table jamu.user doesn't exist
 Solusi: Import ulang database jamu.sql di phpMyAdmin
@@ -198,10 +186,11 @@ Solusi: Gunakan email admin@penjamuhandal.id atau username admin dengan password
 
 Problem: Frontend tidak bisa fetch data dari backend
 Solusi:
-  1. Pastikan backend sudah jalan di port 3000
-  2. Buka http://localhost:3000/health di browser
-  3. Jika muncul {"status":"ok"}, berarti backend OK
-  4. Jika tidak, restart backend server
+
+1. Pastikan backend sudah jalan di port 3000
+2. Buka http://localhost:3000/health di browser
+3. Jika muncul {"status":"ok"}, berarti backend OK
+4. Jika tidak, restart backend server
 
 IMPORT DATA DARI EXCEL (OPSIONAL)
 
@@ -213,6 +202,8 @@ node scripts/importExcel.js
 File jamu206.xlsx harus ada di root folder project (sejajar dengan folder backend/ dan frontend/).
 
 CATATAN PENTING
+
+- Fitur inventory/bahan, supplier, dan produksi saat ini memakai data mock di frontend (karena schema DB `jamu` tidak menyediakan tabel-tabel tersebut).
 
 - Backend harus jalan di port 3000
 - Frontend harus jalan di port 5173

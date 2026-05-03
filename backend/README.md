@@ -1,6 +1,6 @@
-Backend API - Sistem Produksi Jamu
+Backend API - Sistem Jamu
 
-Backend REST API untuk sistem manajemen produksi jamu tradisional Madura.
+Backend REST API untuk sistem manajemen data jamu tradisional Madura.
 
 TEKNOLOGI
 
@@ -8,7 +8,7 @@ TEKNOLOGI
 - MySQL - Database
 - mysql2 - MySQL driver (tanpa ORM, query langsung)
 - JWT - Autentikasi
-- bcryptjs - Hash password
+- bcryptjs - Compare password (mendukung bcrypt jika sudah terlanjur ada)
 - XLSX - Import data Excel
 
 STRUKTUR FOLDER
@@ -27,16 +27,13 @@ backend/
 │   │   ├── jamu.js            # CRUD jamu/resep
 │   │   ├── rempah.js          # CRUD rempah
 │   │   ├── khasiat.js         # CRUD khasiat
-│   │   ├── bahan.js           # Inventaris bahan baku
-│   │   ├── supplier.js        # Manajemen pemasok
-│   │   ├── produksi.js        # Batch produksi
 │   │   ├── kota.js            # Master kota
 │   │   └── search.js          # Pencarian global
 │   └── index.js               # Entry point server
 ├── scripts/
-│   ├── schema.sql             # SQL schema database
 │   ├── importExcel.js         # Script import Excel ke MySQL
-│   └── readExcel.js           # Utility baca Excel
+│   ├── readExcel.js           # Utility baca Excel
+│   └── seedJamuDb.js          # Seed minimal data (tanpa CREATE/ALTER)
 ├── .env                       # Konfigurasi (jangan commit!)
 ├── .env.example               # Template konfigurasi
 └── package.json
@@ -54,12 +51,14 @@ npm install
 2. Setup Database
 
 Cara 1 - phpMyAdmin (direkomendasikan):
+
 1. Buka phpMyAdmin
 2. Klik tab Import
 3. Pilih file jamu.sql (ada di root project)
 4. Klik Go
 
 Cara 2 - Terminal:
+
 ```bash
 mysql -u root -p < jamu.sql
 ```
@@ -73,18 +72,27 @@ cp .env.example .env
 ```
 
 Edit `.env`:
+
 ```env
-DB_HOST=localhost
+DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_USER=root
-DB_PASSWORD=your_password
+DB_PASSWORD=
 DB_NAME=jamu
 
 JWT_SECRET=your_jwt_secret_key_min_32_chars
 PORT=3000
 ```
 
-4. Import Data dari Excel
+4. Seed Data Minimal (wajib untuk login)
+
+Menambahkan 1 user + 1 data dummy per tabel (tanpa mengubah schema DB):
+
+```bash
+node scripts/seedJamuDb.js
+```
+
+5. Import Data dari Excel (opsional)
 
 Pastikan file jamu206.xlsx ada di root project (sejajar folder backend/), lalu jalankan:
 
@@ -93,27 +101,29 @@ node scripts/importExcel.js
 ```
 
 Output:
+
 ```
 Terhubung ke database: jamu
 Sheet ditemukan: Sheet1, BPOM, pil, serbuk, kapsul, cair, selai, krim
 Total baris data: 206
-Produsen diproses: 15
-Rempah/kandungan diproses: 120
-Khasiat diproses: 85
+Rempah baru dimasukkan: ...
+Khasiat baru dimasukkan: ...
 Import selesai!
-   Jamu baru dimasukkan : 206
-   Jamu dilewati (duplikat): 0
-   Bahan inventaris baru: 120
+  Jamu baru dimasukkan      : ...
+  Komposisi baru dimasukkan : ...
+  Relasi khasiat baru       : ...
 ```
 
-5. Jalankan Server
+6. Jalankan Server
 
 Development mode (auto-reload):
+
 ```bash
 npm run dev
 ```
 
 Production mode:
+
 ```bash
 npm start
 ```
@@ -121,6 +131,7 @@ npm start
 Server berjalan di: http://localhost:3000
 
 Test health check:
+
 ```bash
 curl http://localhost:3000/health
 ```
@@ -130,6 +141,7 @@ AUTENTIKASI
 Login Admin Default
 
 Opsi 1 - Login dengan Email:
+
 ```bash
 POST /api/auth/login
 Content-Type: application/json
@@ -141,6 +153,7 @@ Content-Type: application/json
 ```
 
 Opsi 2 - Login dengan Username:
+
 ```bash
 POST /api/auth/login
 Content-Type: application/json
@@ -154,6 +167,7 @@ Content-Type: application/json
 Keduanya bisa digunakan! Backend mendukung login dengan email atau username.
 
 Response:
+
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -161,7 +175,7 @@ Response:
     "id_user": 1,
     "username": "admin",
     "email": "admin@penjamuhandal.id",
-    "role": "admin"
+    "id_kota": 1
   }
 }
 ```
@@ -177,10 +191,12 @@ Authorization: Bearer <token>
 ENDPOINT API
 
 Auth
+
 - `POST /api/auth/login` - Login
 - `POST /api/auth/register` - Register user baru
 
 Users
+
 - `GET /api/users` - List semua user (auth)
 - `GET /api/users/me` - Profil user login (auth)
 - `GET /api/users/:id` - Detail user (auth)
@@ -189,36 +205,15 @@ Users
 - `DELETE /api/users/:id` - Hapus user (auth)
 
 Jamu (Resep)
-- `GET /api/jamu` - List jamu (filter: `?jenis=pil&search=kunyit&khasiat=stamina&rempah=jahe`)
+
+- `GET /api/jamu` - List jamu (filter: `?search=kunyit&khasiat=stamina&rempah=jahe`)
 - `GET /api/jamu/:id` - Detail jamu + komposisi + khasiat
 - `POST /api/jamu` - Tambah jamu baru (auth)
 - `PUT /api/jamu/:id` - Update jamu (auth)
 - `DELETE /api/jamu/:id` - Hapus jamu (auth)
 
-Bahan (Inventaris)
-- `GET /api/bahan` - List semua bahan
-- `GET /api/bahan/:id` - Detail bahan
-- `POST /api/bahan` - Tambah bahan (auth)
-- `PUT /api/bahan/:id` - Update bahan (auth)
-- `DELETE /api/bahan/:id` - Hapus bahan (auth)
-
-Supplier (Pemasok)
-- `GET /api/supplier` - List supplier (filter: `?status=aktif&search=sumenep`)
-- `GET /api/supplier/metrics` - Statistik supplier
-- `GET /api/supplier/:id` - Detail supplier
-- `POST /api/supplier` - Tambah supplier (auth)
-- `PUT /api/supplier/:id` - Update supplier (auth)
-- `DELETE /api/supplier/:id` - Hapus supplier (auth)
-
-Produksi (Batch)
-- `GET /api/produksi` - List batch (filter: `?status=selesai`)
-- `GET /api/produksi/metrics` - Statistik dashboard
-- `GET /api/produksi/:id` - Detail batch
-- `POST /api/produksi` - Buat batch baru (auth)
-- `PUT /api/produksi/:id` - Update batch (auth)
-- `DELETE /api/produksi/:id` - Hapus batch (auth)
-
 Rempah
+
 - `GET /api/rempah` - List rempah
 - `GET /api/rempah/:id` - Detail rempah
 - `POST /api/rempah` - Tambah rempah (auth)
@@ -226,6 +221,7 @@ Rempah
 - `DELETE /api/rempah/:id` - Hapus rempah (auth)
 
 Khasiat
+
 - `GET /api/khasiat` - List khasiat
 - `GET /api/khasiat/:id` - Detail khasiat
 - `POST /api/khasiat` - Tambah khasiat (auth)
@@ -233,47 +229,47 @@ Khasiat
 - `DELETE /api/khasiat/:id` - Hapus khasiat (auth)
 
 Kota
+
 - `GET /api/kota` - List kota
 - `POST /api/kota` - Tambah kota (auth)
 - `PUT /api/kota/:id` - Update kota (auth)
 - `DELETE /api/kota/:id` - Hapus kota (auth)
 
 Search
-- `GET /api/search?q=kunyit` - Pencarian global (jamu, bahan, supplier, khasiat, rempah)
+
+- `GET /api/search?q=kunyit` - Pencarian global (jamu, rempah, khasiat)
 
 DESAIN DATABASE
 
 Tabel Utama
 
-user - Admin dan staff
-- `id_user`, `username`, `email`, `pw` (bcrypt), `role` (admin/supervisor/staff), `id_kota`
+kota
 
-jamu - Resep/produk jamu
-- `id_jamu`, `nama_jamu`, `ket_jamu`, `jenis` (pil/serbuk/kapsul/cair/selai/krim), `perizinan`, `id_user`, `id_produsen`
+- `id_kota`, `nama_kota`, `ket_kota`
 
-rempah - Master rempah/ingredient
+user
+
+- `id_user`, `id_kota`, `username`, `email`, `pw`
+
+rempah
+
 - `id_rempah`, `nama_rempah`, `ket_rempah`
 
-bahan - Inventaris stok bahan baku
-- `id`, `nama`, `kategori`, `satuan`, `stokAwal`, `hargaSatuan`, `threshold`
+khasiat
 
-khasiat - Master khasiat
 - `id_khasiat`, `khasiat`, `ket_khasiat`
 
-produsen - Supplier/pemasok
-- `id_produsen`, `nama_produsen`, `alamat`, `kota`, `kontak`, `email`, `status`
+jamu
 
-produksi - Batch produksi
-- `id_produksi`, `id_jamu`, `id_user`, `kode_batch`, `ukuran_batch`, `volume_output`, `efisiensi`, `status`, `catatan`
+- `id_jamu`, `id_user`, `nama_jamu`, `ket_jamu`
 
-komposisi - Relasi jamu dan rempah
+komposisi
+
 - `id_komposisi`, `id_rempah`, `id_jamu`, `banyak_rempah`
 
-khasiat_jamu - Relasi jamu dan khasiat
-- `id_khasiat_jamu`, `id_khasiat`, `id_jamu`
+khasiat_jamu
 
-kota - Master kota
-- `id_kota`, `nama_kota`, `ket_kota`
+- `id_khasiatjamu`, `id_khasiat`, `id_jamu`
 
 TESTING
 
@@ -300,13 +296,14 @@ CATATAN
 
 - Tanpa ORM: Semua query menggunakan raw SQL untuk kesederhanaan
 - JWT Token: Expired dalam 8 jam
-- Password: Di-hash dengan bcrypt (10 rounds)
+- Password: Karena kolom `pw` adalah `varchar(30)`, password disimpan plaintext (maks 30 karakter). Login juga mendukung bcrypt jika data lama terlanjur hash.
 - CORS: Enabled untuk semua origin (sesuaikan di production)
 - Port default: 3000 (bisa diubah di .env)
 
 TROUBLESHOOTING
 
 Error: Cannot find module 'xlsx'
+
 ```bash
 npm install
 ```
@@ -319,6 +316,7 @@ Import jamu.sql di phpMyAdmin terlebih dahulu
 
 Port 3000 sudah digunakan
 Ubah PORT di .env atau kill process:
+
 ```bash
 # Windows
 netstat -ano | findstr :3000

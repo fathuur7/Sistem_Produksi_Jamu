@@ -7,8 +7,9 @@
  *
  * Pastikan:
  *   1. File jamu206.xlsx ada di root project (sejajar folder backend/)
- *   2. Database sudah dibuat dengan schema.sql
- *   3. File .env sudah dikonfigurasi
+ *   2. Database `jamu` sudah diimport dari jamu.sql (schema minimal 7 tabel)
+ *   3. File backend/.env sudah dikonfigurasi
+ *   4. Minimal ada 1 user (jalankan: node scripts/seedJamuDb.js)
  */
 
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
@@ -18,22 +19,60 @@ const path = require('path');
 
 const EXCEL_PATH = path.join(__dirname, '../../jamu206.xlsx');
 
+function normalizeText(value) {
+  return (value ?? '').toString().trim();
+}
+
+function normalizeKey(value) {
+  return normalizeText(value).toLowerCase();
+}
+
+function truncate(value, maxLen) {
+  const s = normalizeText(value);
+  if (!s) return null;
+  return s.length > maxLen ? s.slice(0, maxLen) : s;
+}
+
+async function getMaxId(conn, table, idColumn) {
+  if (!/^[a-zA-Z0-9_]+$/.test(table) || !/^[a-zA-Z0-9_]+$/.test(idColumn)) {
+    throw new Error('Invalid identifier');
+  }
+  const [rows] = await conn.query(
+    'SELECT COALESCE(MAX(`' + idColumn + '`), 0) AS maxId FROM `' + table + '`'
+  );
+  return rows[0].maxId;
+}
+
+function splitParts(value) {
+  const raw = normalizeText(value);
+  if (!raw) return [];
+  return raw
+    .split(/[,;]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 async function main() {
-  const db = await mysql.createConnection({
-    host:     process.env.DB_HOST     || 'localhost',
-    port:     process.env.DB_PORT     || 3306,
-    user:     process.env.DB_USER     || 'root',
+  const conn = await mysql.createConnection({
+    host: process.env.DB_HOST || 'localhost',
+    port: Number(process.env.DB_PORT || 3306),
+    user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME     || 'jamu',
+    database: process.env.DB_NAME || 'jamu',
   });
 
   console.log('✅ Terhubung ke database:', process.env.DB_NAME || 'jamu');
 
   try {
+    const [userRows] = await conn.query('SELECT id_user FROM user ORDER BY id_user ASC LIMIT 1');
+    if (!userRows.length) {
+      throw new Error('Tabel `user` masih kosong. Jalankan dulu: node scripts/seedJamuDb.js');
+    }
+    const defaultUserId = userRows[0].id_user;
+
     const wb = XLSX.readFile(EXCEL_PATH);
     console.log('📂 Sheet ditemukan:', wb.SheetNames.join(', '));
 
-    // Kumpulkan semua baris dari semua sheet
     const allRows = [];
     for (const sheetName of wb.SheetNames) {
       const ws = wb.Sheets[sheetName];
@@ -44,171 +83,155 @@ async function main() {
     }
     console.log(`📊 Total baris data: ${allRows.length}`);
 
-    // --------------------------------------------------------
-    // 1. Kumpulkan & insert produsen unik
-    // --------------------------------------------------------
-    const produsenSet = new Set();
-    for (const row of allRows) {
-      const nama = (row['PRODUSEN'] || '').toString().trim();
-      if (nama) produsenSet.add(nama);
-    }
+    // Preload existing master data
+    const [rempahRows] = await conn.query('SELECT id_rempah, nama_rempah FROM rempah');
+    const rempahMap = new Map(rempahRows.map((r) => [normalizeKey(r.nama_rempah), r.id_rempah]));
 
-    const produsenMap = {}; // nama -> id_produsen
-    for (const nama of produsenSet) {
-      const [existing] = await db.query(
-        'SELECT id_produsen FROM produsen WHERE nama_produsen = ?', [nama]
-      );
-      if (existing.length > 0) {
-        produsenMap[nama] = existing[0].id_produsen;
-      } else {
-        const [result] = await db.query(
-          'INSERT INTO produsen (nama_produsen) VALUES (?)', [nama]
-        );
-        produsenMap[nama] = result.insertId;
-      }
-    }
-    console.log(`🏭 Produsen diproses: ${produsenSet.size}`);
+    const [khasiatRows] = await conn.query('SELECT id_khasiat, khasiat FROM khasiat');
+    const khasiatMap = new Map(khasiatRows.map((k) => [normalizeKey(k.khasiat), k.id_khasiat]));
 
-    // --------------------------------------------------------
-    // 2. Kumpulkan & insert rempah unik dari kolom KANDUNGAN
-    // --------------------------------------------------------
+    const [jamuRows] = await conn.query('SELECT id_jamu, nama_jamu FROM jamu');
+    const jamuMap = new Map(jamuRows.map((j) => [normalizeKey(j.nama_jamu), j.id_jamu]));
+
+    const [komposisiRows] = await conn.query('SELECT id_jamu, id_rempah FROM komposisi');
+    const komposisiPairs = new Set(komposisiRows.map((r) => `${r.id_jamu}:${r.id_rempah}`));
+
+    const [khasiatJamuRows] = await conn.query('SELECT id_jamu, id_khasiat FROM khasiat_jamu');
+    const khasiatJamuPairs = new Set(khasiatJamuRows.map((r) => `${r.id_jamu}:${r.id_khasiat}`));
+
+    // Next IDs (schema `jamu` saat ini: PK bukan AUTO_INCREMENT)
+    let nextRempahId = (await getMaxId(conn, 'rempah', 'id_rempah')) + 1;
+    let nextKhasiatId = (await getMaxId(conn, 'khasiat', 'id_khasiat')) + 1;
+    let nextJamuId = (await getMaxId(conn, 'jamu', 'id_jamu')) + 1;
+    let nextKomposisiId = (await getMaxId(conn, 'komposisi', 'id_komposisi')) + 1;
+    let nextKhasiatJamuId = (await getMaxId(conn, 'khasiat_jamu', 'id_khasiatjamu')) + 1;
+
+    // 1) Insert missing rempah from KANDUNGAN
     const rempahSet = new Set();
     for (const row of allRows) {
-      const kandungan = (row['KANDUNGAN'] || '').toString();
-      // Pisahkan berdasarkan koma atau titik koma
-      const parts = kandungan.split(/[,;]/).map(s => s.trim().toLowerCase()).filter(Boolean);
-      for (const p of parts) {
-        if (p.length > 1 && p.length < 150) rempahSet.add(p);
+      for (const part of splitParts(row['KANDUNGAN'])) {
+        const nama = truncate(part, 50);
+        if (!nama) continue;
+        rempahSet.add(normalizeKey(nama));
       }
     }
 
-    const rempahMap = {}; // nama -> id_rempah
-    for (const nama of rempahSet) {
-      const [existing] = await db.query(
-        'SELECT id_rempah FROM rempah WHERE LOWER(nama_rempah) = ?', [nama]
+    let rempahInserted = 0;
+    for (const key of rempahSet) {
+      if (rempahMap.has(key)) continue;
+      const nama = truncate(key, 50);
+      await conn.query(
+        'INSERT INTO rempah (id_rempah, nama_rempah, ket_rempah) VALUES (?, ?, ?)',
+        [nextRempahId, nama, null]
       );
-      if (existing.length > 0) {
-        rempahMap[nama] = existing[0].id_rempah;
-      } else {
-        const [result] = await db.query(
-          'INSERT INTO rempah (nama_rempah) VALUES (?)', [nama]
-        );
-        rempahMap[nama] = result.insertId;
-      }
+      rempahMap.set(key, nextRempahId);
+      nextRempahId += 1;
+      rempahInserted += 1;
     }
-    console.log(`🌿 Rempah/kandungan diproses: ${rempahSet.size}`);
+    console.log(`🌿 Rempah baru dimasukkan: ${rempahInserted}`);
 
-    // --------------------------------------------------------
-    // 3. Kumpulkan & insert khasiat unik dari kolom KHASIAT
-    // --------------------------------------------------------
+    // 2) Insert missing khasiat from KHASIAT
     const khasiatSet = new Set();
     for (const row of allRows) {
-      const khasiat = (row['KHASIAT'] || '').toString().trim();
-      if (khasiat && khasiat.length < 200) khasiatSet.add(khasiat);
+      const teks = truncate(row['KHASIAT'], 100);
+      if (!teks) continue;
+      khasiatSet.add(normalizeKey(teks));
     }
 
-    const khasiatMap = {}; // teks -> id_khasiat
-    for (const teks of khasiatSet) {
-      const [existing] = await db.query(
-        'SELECT id_khasiat FROM khasiat WHERE khasiat = ?', [teks]
+    let khasiatInserted = 0;
+    for (const key of khasiatSet) {
+      if (khasiatMap.has(key)) continue;
+      const teks = truncate(key, 100);
+      await conn.query(
+        'INSERT INTO khasiat (id_khasiat, khasiat, ket_khasiat) VALUES (?, ?, ?)',
+        [nextKhasiatId, teks, null]
       );
-      if (existing.length > 0) {
-        khasiatMap[teks] = existing[0].id_khasiat;
-      } else {
-        const [result] = await db.query(
-          'INSERT INTO khasiat (khasiat) VALUES (?)', [teks]
-        );
-        khasiatMap[teks] = result.insertId;
-      }
+      khasiatMap.set(key, nextKhasiatId);
+      nextKhasiatId += 1;
+      khasiatInserted += 1;
     }
-    console.log(`💊 Khasiat diproses: ${khasiatSet.size}`);
+    console.log(`💊 Khasiat baru dimasukkan: ${khasiatInserted}`);
 
-    // --------------------------------------------------------
-    // 4. Insert jamu + komposisi + khasiat_jamu
-    // --------------------------------------------------------
+    // 3) Insert/relate jamu, komposisi, khasiat_jamu
     let jamuInserted = 0;
-    let jamuSkipped  = 0;
+    let komposisiInserted = 0;
+    let khasiatJamuInserted = 0;
 
+    await conn.beginTransaction();
     for (const row of allRows) {
-      const namaJamu = (row['NAMA JAMU'] || '').toString().trim();
+      const namaJamu = truncate(row['NAMA JAMU'], 50);
       if (!namaJamu) continue;
 
-      const ketJamu    = (row['KHASIAT']  || '').toString().trim();
-      const jenis      = (row['JENIS']    || '').toString().trim().toLowerCase();
-      const perizinan  = (row['PERIZINAN']|| '').toString().trim();
-      const namaProdusen = (row['PRODUSEN']|| '').toString().trim();
-      const kandungan  = (row['KANDUNGAN']|| '').toString().trim();
+      const jamuKey = normalizeKey(namaJamu);
+      let jamuId = jamuMap.get(jamuKey);
 
-      const id_produsen = produsenMap[namaProdusen] || null;
-
-      // Cek duplikat
-      const [existing] = await db.query(
-        'SELECT id_jamu FROM jamu WHERE nama_jamu = ? AND jenis = ?',
-        [namaJamu, jenis]
-      );
-      if (existing.length > 0) {
-        jamuSkipped++;
-        continue;
+      if (!jamuId) {
+        const ketJamu = truncate(row['KHASIAT'], 100);
+        jamuId = nextJamuId;
+        await conn.query(
+          'INSERT INTO jamu (id_jamu, id_user, nama_jamu, ket_jamu) VALUES (?, ?, ?, ?)',
+          [jamuId, defaultUserId, namaJamu, ketJamu]
+        );
+        jamuMap.set(jamuKey, jamuId);
+        nextJamuId += 1;
+        jamuInserted += 1;
       }
 
-      // Insert jamu
-      const [jamuResult] = await db.query(
-        'INSERT INTO jamu (nama_jamu, ket_jamu, jenis, perizinan, id_produsen) VALUES (?, ?, ?, ?, ?)',
-        [namaJamu, ketJamu, jenis, perizinan, id_produsen]
-      );
-      const id_jamu = jamuResult.insertId;
-      jamuInserted++;
+      // komposisi (rempah)
+      for (const part of splitParts(row['KANDUNGAN'])) {
+        const nama = truncate(part, 50);
+        if (!nama) continue;
+        const rempahId = rempahMap.get(normalizeKey(nama));
+        if (!rempahId) continue;
 
-      // Insert komposisi (rempah)
-      if (kandungan) {
-        const parts = kandungan.split(/[,;]/).map(s => s.trim().toLowerCase()).filter(Boolean);
-        for (const part of parts) {
-          if (rempahMap[part]) {
-            await db.query(
-              'INSERT IGNORE INTO komposisi (id_rempah, id_jamu, banyak_rempah) VALUES (?, ?, ?)',
-              [rempahMap[part], id_jamu, null]
-            );
+        const pairKey = `${jamuId}:${rempahId}`;
+        if (komposisiPairs.has(pairKey)) continue;
+
+        await conn.query(
+          'INSERT INTO komposisi (id_komposisi, id_rempah, id_jamu, banyak_rempah) VALUES (?, ?, ?, ?)',
+          [nextKomposisiId, rempahId, jamuId, null]
+        );
+        komposisiPairs.add(pairKey);
+        nextKomposisiId += 1;
+        komposisiInserted += 1;
+      }
+
+      // khasiat_jamu
+      {
+        const teks = truncate(row['KHASIAT'], 100);
+        if (teks) {
+          const khId = khasiatMap.get(normalizeKey(teks));
+          if (khId) {
+            const pairKey = `${jamuId}:${khId}`;
+            if (!khasiatJamuPairs.has(pairKey)) {
+              await conn.query(
+                'INSERT INTO khasiat_jamu (id_khasiatjamu, id_khasiat, id_jamu) VALUES (?, ?, ?)',
+                [nextKhasiatJamuId, khId, jamuId]
+              );
+              khasiatJamuPairs.add(pairKey);
+              nextKhasiatJamuId += 1;
+              khasiatJamuInserted += 1;
+            }
           }
         }
       }
-
-      // Insert khasiat_jamu
-      if (ketJamu && khasiatMap[ketJamu]) {
-        await db.query(
-          'INSERT IGNORE INTO khasiat_jamu (id_khasiat, id_jamu) VALUES (?, ?)',
-          [khasiatMap[ketJamu], id_jamu]
-        );
-      }
     }
+    await conn.commit();
 
-    console.log(`\n✅ Import selesai!`);
-    console.log(`   Jamu baru dimasukkan : ${jamuInserted}`);
-    console.log(`   Jamu dilewati (duplikat): ${jamuSkipped}`);
-
-    // --------------------------------------------------------
-    // 5. Insert bahan inventaris dari rempah yang sudah ada
-    //    (stok awal 0, bisa diupdate manual)
-    // --------------------------------------------------------
-    let bahanInserted = 0;
-    for (const [nama] of Object.entries(rempahMap)) {
-      const [existing] = await db.query(
-        'SELECT id FROM bahan WHERE LOWER(nama) = ?', [nama.toLowerCase()]
-      );
-      if (existing.length === 0) {
-        await db.query(
-          'INSERT INTO bahan (nama, kategori, satuan, stokAwal, hargaSatuan) VALUES (?, ?, ?, ?, ?)',
-          [nama, 'Lainnya', 'kg', 0, 0]
-        );
-        bahanInserted++;
-      }
-    }
-    console.log(`   Bahan inventaris baru: ${bahanInserted}`);
-
+    console.log('\n✅ Import selesai!');
+    console.log(`   Jamu baru dimasukkan      : ${jamuInserted}`);
+    console.log(`   Komposisi baru dimasukkan : ${komposisiInserted}`);
+    console.log(`   Relasi khasiat baru       : ${khasiatJamuInserted}`);
   } catch (err) {
+    try {
+      await conn.rollback();
+    } catch {
+      // ignore
+    }
     console.error('❌ Error:', err.message);
-    process.exit(1);
+    process.exitCode = 1;
   } finally {
-    await db.end();
+    await conn.end();
     console.log('\n🔌 Koneksi database ditutup.');
   }
 }

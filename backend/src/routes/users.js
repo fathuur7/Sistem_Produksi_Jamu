@@ -3,7 +3,7 @@ const router = express.Router();
 const db = require('../config/db');
 const { authenticate } = require('../middleware/auth');
 
-// GET /api/users - list semua user (admin only)
+// GET /api/users - list semua user
 router.get('/', authenticate, async (req, res) => {
   try {
     const [rows] = await db.query(`
@@ -52,7 +52,7 @@ router.get('/:id', authenticate, async (req, res) => {
   }
 });
 
-// PUT /api/users/:id - update profil / role
+// PUT /api/users/:id - update profil
 router.put('/:id', authenticate, async (req, res) => {
   const { username, email, id_kota } = req.body;
   try {

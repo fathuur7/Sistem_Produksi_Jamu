@@ -11,7 +11,7 @@ export default function Dashboard() {
     <>
       <Helmet>
         <title>Dashboard | Penjamu Handal</title>
-        <meta name="description" content="Konsol produksi Penjamu Handal — pantau batch aktif, stok rempah, dan antrian produksi secara real-time." />
+        <meta name="description" content="Dashboard Penjamu Handal — ringkasan data jamu, rempah, dan khasiat." />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
