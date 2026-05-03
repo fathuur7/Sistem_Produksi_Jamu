@@ -25,8 +25,14 @@ router.get('/:id', async (req, res) => {
 router.post('/', authenticate, async (req, res) => {
   const { nama_rempah, ket_rempah } = req.body;
   try {
-    const [result] = await db.query('INSERT INTO rempah (nama_rempah, ket_rempah) VALUES (?, ?)', [nama_rempah, ket_rempah]);
-    res.status(201).json({ id_rempah: result.insertId, nama_rempah, ket_rempah });
+    const [[{ nextId }]] = await db.query(
+      'SELECT COALESCE(MAX(id_rempah), 0) + 1 AS nextId FROM rempah'
+    );
+    await db.query(
+      'INSERT INTO rempah (id_rempah, nama_rempah, ket_rempah) VALUES (?, ?, ?)',
+      [nextId, nama_rempah ?? null, ket_rempah ?? null]
+    );
+    res.status(201).json({ id_rempah: nextId, nama_rempah: nama_rempah ?? null, ket_rempah: ket_rempah ?? null });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

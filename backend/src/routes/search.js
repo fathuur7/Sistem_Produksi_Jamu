@@ -4,7 +4,7 @@ const db = require('../config/db');
 
 /**
  * GET /api/search?q=kunyit
- * Mencari di jamu, rempah, dan produsen sekaligus
+ * Mencari di jamu, rempah, dan khasiat (sesuai schema DB `jamu` saat ini)
  */
 router.get('/', async (req, res) => {
   const { q } = req.query;
@@ -17,33 +17,34 @@ router.get('/', async (req, res) => {
   try {
     // Cari di tabel jamu
     const [jamu] = await db.query(`
-      SELECT j.id_jamu AS id, j.nama_jamu AS nama, j.jenis, j.ket_jamu AS deskripsi,
-             p.nama_produsen AS produsen, 'jamu' AS tipe
+      SELECT j.id_jamu AS id, j.nama_jamu AS nama, j.ket_jamu AS deskripsi,
+             'jamu' AS tipe
       FROM jamu j
-      LEFT JOIN produsen p ON j.id_produsen = p.id_produsen
-      WHERE j.nama_jamu LIKE ? OR j.ket_jamu LIKE ? OR j.jenis LIKE ?
-      LIMIT 20
-    `, [keyword, keyword, keyword]);
-
-    // Cari di tabel rempah/bahan
-    const [bahan] = await db.query(`
-      SELECT id, nama, kategori, satuan, stokAwal AS stok, 'bahan' AS tipe
-      FROM bahan
-      WHERE nama LIKE ? OR kategori LIKE ?
+      WHERE j.nama_jamu LIKE ? OR j.ket_jamu LIKE ?
       LIMIT 20
     `, [keyword, keyword]);
 
-    // Cari di tabel produsen/supplier
-    const [supplier] = await db.query(`
-      SELECT id_produsen AS id, nama_produsen AS nama, kota, status, 'supplier' AS tipe
-      FROM produsen
-      WHERE nama_produsen LIKE ? OR kota LIKE ?
-      LIMIT 10
+    // Cari di tabel rempah
+    const [rempah] = await db.query(`
+      SELECT id_rempah AS id, nama_rempah AS nama, ket_rempah AS deskripsi,
+             'rempah' AS tipe
+      FROM rempah
+      WHERE nama_rempah LIKE ? OR ket_rempah LIKE ?
+      LIMIT 20
+    `, [keyword, keyword]);
+
+    // Cari di tabel khasiat
+    const [khasiat] = await db.query(`
+      SELECT id_khasiat AS id, khasiat AS nama, ket_khasiat AS deskripsi,
+             'khasiat' AS tipe
+      FROM khasiat
+      WHERE khasiat LIKE ? OR ket_khasiat LIKE ?
+      LIMIT 20
     `, [keyword, keyword]);
 
     // Cari jamu berdasarkan khasiat
     const [byKhasiat] = await db.query(`
-      SELECT j.id_jamu AS id, j.nama_jamu AS nama, j.jenis, kh.khasiat AS deskripsi,
+      SELECT j.id_jamu AS id, j.nama_jamu AS nama, kh.khasiat AS deskripsi,
              'jamu' AS tipe
       FROM khasiat_jamu kj
       JOIN khasiat kh ON kj.id_khasiat = kh.id_khasiat
@@ -54,7 +55,7 @@ router.get('/', async (req, res) => {
 
     // Cari jamu berdasarkan kandungan rempah
     const [byRempah] = await db.query(`
-      SELECT DISTINCT j.id_jamu AS id, j.nama_jamu AS nama, j.jenis,
+      SELECT DISTINCT j.id_jamu AS id, j.nama_jamu AS nama,
              r.nama_rempah AS deskripsi, 'jamu' AS tipe
       FROM komposisi k
       JOIN rempah r ON k.id_rempah = r.id_rempah
@@ -67,12 +68,12 @@ router.get('/', async (req, res) => {
       query: q,
       results: {
         jamu,
-        bahan,
-        supplier,
+        rempah,
+        khasiat,
         byKhasiat,
         byRempah,
       },
-      total: jamu.length + bahan.length + supplier.length + byKhasiat.length + byRempah.length
+      total: jamu.length + rempah.length + khasiat.length + byKhasiat.length + byRempah.length
     });
   } catch (err) {
     res.status(500).json({ message: err.message });

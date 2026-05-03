@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcryptjs');
 const db = require('../config/db');
 const { authenticate } = require('../middleware/auth');
 
@@ -8,11 +7,11 @@ const { authenticate } = require('../middleware/auth');
 router.get('/', authenticate, async (req, res) => {
   try {
     const [rows] = await db.query(`
-      SELECT u.id_user, u.username, u.email, u.role, u.created_at,
+      SELECT u.id_user, u.username, u.email, u.id_kota,
              k.nama_kota
       FROM user u
       LEFT JOIN kota k ON u.id_kota = k.id_kota
-      ORDER BY u.created_at DESC
+      ORDER BY u.id_user ASC
     `);
     res.json({ data: rows });
   } catch (err) {
@@ -24,7 +23,7 @@ router.get('/', authenticate, async (req, res) => {
 router.get('/me', authenticate, async (req, res) => {
   try {
     const [rows] = await db.query(`
-      SELECT u.id_user, u.username, u.email, u.role, k.nama_kota
+      SELECT u.id_user, u.username, u.email, u.id_kota, k.nama_kota
       FROM user u
       LEFT JOIN kota k ON u.id_kota = k.id_kota
       WHERE u.id_user = ?
@@ -40,7 +39,7 @@ router.get('/me', authenticate, async (req, res) => {
 router.get('/:id', authenticate, async (req, res) => {
   try {
     const [rows] = await db.query(`
-      SELECT u.id_user, u.username, u.email, u.role, u.created_at,
+      SELECT u.id_user, u.username, u.email, u.id_kota,
              k.nama_kota
       FROM user u
       LEFT JOIN kota k ON u.id_kota = k.id_kota
@@ -55,11 +54,11 @@ router.get('/:id', authenticate, async (req, res) => {
 
 // PUT /api/users/:id - update profil / role
 router.put('/:id', authenticate, async (req, res) => {
-  const { username, email, role, id_kota } = req.body;
+  const { username, email, id_kota } = req.body;
   try {
     await db.query(
-      'UPDATE user SET username = ?, email = ?, role = ?, id_kota = ? WHERE id_user = ?',
-      [username, email, role, id_kota, req.params.id]
+      'UPDATE user SET username = ?, email = ?, id_kota = ? WHERE id_user = ?',
+      [username, email, id_kota ?? null, req.params.id]
     );
     res.json({ message: 'User diperbarui' });
   } catch (err) {
@@ -70,12 +69,15 @@ router.put('/:id', authenticate, async (req, res) => {
 // PUT /api/users/:id/password - ganti password
 router.put('/:id/password', authenticate, async (req, res) => {
   const { password } = req.body;
-  if (!password || password.length < 6) {
-    return res.status(400).json({ message: 'Password minimal 6 karakter' });
+  if (!password) {
+    return res.status(400).json({ message: 'Password wajib diisi' });
+  }
+  if (String(password).length > 30) {
+    return res.status(400).json({ message: 'Password maksimal 30 karakter' });
   }
   try {
-    const hashed = await bcrypt.hash(password, 10);
-    await db.query('UPDATE user SET pw = ? WHERE id_user = ?', [hashed, req.params.id]);
+    // Schema DB `jamu` saat ini: `pw` varchar(30) → simpan plaintext.
+    await db.query('UPDATE user SET pw = ? WHERE id_user = ?', [String(password), req.params.id]);
     res.json({ message: 'Password diperbarui' });
   } catch (err) {
     res.status(500).json({ message: err.message });
