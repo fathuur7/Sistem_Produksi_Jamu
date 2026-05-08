@@ -1,4 +1,43 @@
-export default function InventoryBento() {
+import type { InventoryItem } from '../../../types/inventory';
+
+interface InventoryBentoProps {
+  items: InventoryItem[];
+}
+
+export default function InventoryBento({ items }: InventoryBentoProps) {
+  const totalItems = items.length;
+  const lowStockItems = items.filter(item => item.status === 'Kritis' || item.status === 'Kosong');
+  const warningItems = items.filter(item => item.status === 'Peringatan');
+
+  const volatilityScore = totalItems
+    ? Math.round(
+        items.reduce((sum, item) => {
+          const threshold = Math.max(item.threshold, 1);
+          const gap = Math.max(0, threshold - item.stock) / threshold;
+          return sum + gap;
+        }, 0) * 100 / totalItems,
+      )
+    : 0;
+
+  const volatilityLabel = `${volatilityScore >= 0 ? '+' : ''}${volatilityScore}% Minggu Ini`;
+
+  const chartItems = [...items]
+    .sort((left, right) => {
+      const leftGap = Math.abs(left.stock - left.threshold);
+      const rightGap = Math.abs(right.stock - right.threshold);
+      return rightGap - leftGap;
+    })
+    .slice(0, 6);
+
+  const chartValues = chartItems.map(item => {
+    const threshold = Math.max(item.threshold, 1);
+    return Math.min(100, Math.max(18, Math.round((Math.abs(item.stock - threshold) / threshold) * 100)));
+  });
+
+  const riskSummary = totalItems
+    ? `${lowStockItems.length + warningItems.length} dari ${totalItems} bahan perlu perhatian`
+    : 'Belum ada data inventaris';
+
   return (
     <div className="mt-12 grid grid-cols-1 lg:grid-cols-12 gap-6">
       {/* Automated Ordering */}
@@ -6,7 +45,7 @@ export default function InventoryBento() {
         <div className="relative z-10 w-full">
           <h3 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-2 font-headline">Pemesanan Otomatis</h3>
           <p className="text-on-primary-container/80 max-w-sm mb-6 text-sm md:text-base">
-            Bahan baku dengan stok rendah saat ini diatur untuk memicu notifikasi. Aktifkan Auto-PO untuk menjembatani celah dengan pemasok secara otomatis.
+            {riskSummary}. Aktifkan Auto-PO untuk menjembatani celah dengan pemasok secara otomatis.
           </p>
           <button className="w-full sm:w-auto px-6 py-3 bg-secondary text-on-secondary font-bold rounded-xl shadow-lg shadow-black/10 hover:brightness-110 active:scale-95 transition-all">
             Konfigurasi Sumber Cerdas
@@ -27,18 +66,25 @@ export default function InventoryBento() {
           </div>
           <p className="text-xs font-bold uppercase tracking-widest text-on-secondary-fixed/60">Volatilitas Pasokan</p>
           <h3 className="text-3xl font-extrabold text-on-secondary-fixed mt-1 font-headline">
-            +12% <span className="text-lg font-medium opacity-60 ml-1">Minggu Ini</span>
+            {volatilityScore}% <span className="text-lg font-medium opacity-60 ml-1">Minggu Ini</span>
           </h3>
+          <p className="mt-2 text-xs font-medium text-on-secondary-fixed/70">
+            {volatilityLabel}
+          </p>
         </div>
         
-        {/* Mock Chart */}
         <div className="mt-8 flex items-end gap-1.5 h-20">
-          <div className="h-[30%] w-full bg-on-secondary-fixed/15 rounded-t-sm hover:h-[35%] transition-all"></div>
-          <div className="h-[50%] w-full bg-on-secondary-fixed/15 rounded-t-sm hover:h-[55%] transition-all"></div>
-          <div className="h-[70%] w-full bg-on-secondary-fixed/15 rounded-t-sm hover:h-[75%] transition-all"></div>
-          <div className="h-[40%] w-full bg-on-secondary-fixed/15 rounded-t-sm hover:h-[45%] transition-all"></div>
-          <div className="h-[60%] w-full bg-on-secondary-fixed/15 rounded-t-sm hover:h-[65%] transition-all"></div>
-          <div className="h-[100%] w-full bg-on-secondary-fixed rounded-t-sm shadow-sm opacity-90 hover:opacity-100 transition-all"></div>
+          {chartValues.map((value, index) => (
+            <div
+              key={`${chartItems[index]?.id ?? index}`}
+              className={`w-full rounded-t-sm transition-all hover:opacity-100 ${
+                index === chartValues.length - 1
+                  ? 'bg-on-secondary-fixed shadow-sm opacity-90'
+                  : 'bg-on-secondary-fixed/15'
+              }`}
+              style={{ height: `${value}%` }}
+            />
+          ))}
         </div>
       </div>
     </div>

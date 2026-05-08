@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { mainNavItems, adminNavItems } from '../../config/navigation';
 
@@ -73,14 +73,6 @@ export default function Sidebar({ className = '', isOpen, onClose }: SidebarProp
           {adminNavItems.map((item) => navLink(item, 'text-[20px]'))}
         </div>
       </nav>
-
-      {/* New Batch CTA */}
-      <div className="px-6 mt-auto">
-        <button className="w-full apothecary-gradient text-on-primary py-3 px-4 rounded-lg font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-95 shadow-sm">
-          <span className="material-symbols-outlined text-sm">add_circle</span>
-          Batch Baru
-        </button>
-      </div>
     </div>
   );
 

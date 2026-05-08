@@ -2,6 +2,8 @@ import { Helmet } from 'react-helmet-async';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import AppShell from '../components/layout/AppShell';
+import { getRecipeImage } from '../components/pages/recipes/recipeImage';
+import Image from '../components/Image';
 
 interface Komposisi {
   id_rempah: number;
@@ -36,8 +38,6 @@ async function fetchJamu(id: string): Promise<JamuDetail> {
   return res.json();
 }
 
-const HERO_IMG = 'https://images.unsplash.com/photo-1615486511484-92e172e27bda?q=80&w=1600&auto=format&fit=crop';
-
 export default function RecipeDetail() {
   const { id } = useParams<{ id: string }>();
   const { data: jamu, isLoading, error } = useQuery({
@@ -47,6 +47,7 @@ export default function RecipeDetail() {
   });
 
   const title = jamu ? `${jamu.nama_jamu} - Detail Resep | Penjamu Handal` : 'Detail Resep | Penjamu Handal';
+  const heroImage = jamu ? getRecipeImage(jamu.nama_jamu, jamu.jenis) : undefined;
 
   return (
     <>
@@ -80,7 +81,12 @@ export default function RecipeDetail() {
               <>
                 {/* Hero */}
                 <div className="relative w-full h-[260px] sm:h-[340px] md:h-[440px] rounded-2xl md:rounded-3xl overflow-hidden mb-6 md:mb-10 shadow-sm">
-                  <img src={HERO_IMG} alt={jamu.nama_jamu} className="absolute inset-0 w-full h-full object-cover" />
+                  <Image
+                    src={heroImage}
+                    alt={jamu.nama_jamu}
+                    fallbackSrc="/jamu.jpg"
+                    wrapperClassName="absolute inset-0"
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
                   <div className="absolute inset-0 p-5 sm:p-8 md:p-12 flex flex-col justify-between">
                     <div>

@@ -25,7 +25,7 @@ const SearchResults  = lazy(() => import('../pages/SearchResults'));
 const Notifications  = lazy(() => import('../pages/Notifications'));
 const Users          = lazy(() => import('../pages/Users'));
 const Cities         = lazy(() => import('../pages/Cities'));
-const Benefits       = lazy(() => import('../pages/Benefits'));
+// const Benefits       = lazy(() => import('../pages/Benefits'));
 
 // ── Loading spinner ───────────────────────────────────────────
 const LazyLoad = ({ children }: { children: React.ReactNode }) => (
@@ -140,10 +140,10 @@ const router = createBrowserRouter([
         path: '/cities',
         element: <Protected><Cities /></Protected>,
       },
-      {
-        path: '/benefits',
-        element: <Protected><Benefits /></Protected>,
-      },
+      // {
+      //   path: '/benefits',
+      //   element: <Protected><Benefits /></Protected>,
+      // },
 
       // ── Admin-only ──────────────────────────────────────────
       {

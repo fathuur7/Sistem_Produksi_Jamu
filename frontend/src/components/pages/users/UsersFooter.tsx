@@ -5,9 +5,9 @@ export default function UsersFooter() {
         <span className="material-symbols-outlined text-3xl">lightbulb</span>
       </div>
       <div>
-        <h4 className="text-lg font-headline font-bold text-primary mb-1">Hierarki Staf & Integritas Data</h4>
+        <h4 className="text-lg font-headline font-bold text-primary mb-1">Hierarki Staf & Kebersihan Akses</h4>
         <p className="text-sm font-medium text-on-surface-variant/80 leading-relaxed md:max-w-4xl">
-          Ingat bahwa memperbarui peran pengguna menjadi <span className="font-bold text-primary">System Admin</span> akan memberikan akses penuh ke catatan produksi dan formula botani yang sensitif. Log audit otomatis dibuat untuk setiap perubahan hak demi memastikan hak cipta warisan Penjamu Handal tetap terlindungi.
+          Naikkan peran ke <span className="font-bold text-primary">Administrator</span> atau <span className="font-bold text-primary">Supervisor</span> hanya saat memang diperlukan. Direktori ini membantu tim menjaga siapa yang punya akses penuh, siapa yang mengawasi operasi, dan siapa yang fokus ke kerja harian.
         </p>
       </div>
     </div>
