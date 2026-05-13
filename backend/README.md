@@ -127,7 +127,27 @@ curl http://localhost:3000/health
 
 AUTENTIKASI
 
-Login Admin Default
+Login Default
+
+Setelah menjalankan seeder (`npm run seed`), tersedia 3 jenis akun:
+
+**1. Admin (Full Access)**
+- Username: `admin`
+- Email: `admin@penjamuhandal.id`
+- Password: `admin123`
+- Role: `admin`
+
+**2. Supervisor**
+- Username: `supervisor1`
+- Email: `supervisor1@penjamuhandal.id`
+- Password: `super123`
+- Role: `supervisor`
+
+**3. Staff**
+- Username: `staff_budi`
+- Email: `budi@penjamuhandal.id`
+- Password: `staff123`
+- Role: `staff`
 
 Opsi 1 - Login dengan Email:
 ```bash
