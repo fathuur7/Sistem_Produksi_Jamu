@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet-async';
-import AppShell from '../components/layout/AppShell';
+import AppShell from '../../components/layout/AppShell';
 
 export default function Cities() {
   const supplyCities = [

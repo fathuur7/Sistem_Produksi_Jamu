@@ -16,45 +16,55 @@ export default function LoginForm() {
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!email || !password) {
-      toast.error('Email dan password harus diisi');
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // kirim/terima HttpOnly cookie
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Login gagal');
+      e.preventDefault();
+  
+      if (!email || !password) {
+        toast.error('Email dan password harus diisi');
+        return;
       }
-
-      // Simpan user di Zustand store (token ada di HttpOnly cookie — tidak perlu disimpan di JS)
-      setUser(data.user);
-
-      toast.success(`Selamat datang, ${data.user.username}!`);
-      // Redirect ke halaman asal, atau /dashboard jika tidak ada
-      navigate(from, { replace: true });
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : 'Login gagal. Periksa email dan password Anda.'
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    
+      setIsLoading(true);
+    
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include', // kirim/terima HttpOnly cookie
+          body: JSON.stringify({ email, password }),
+        });
+      
+        const data = await response.json();
+      
+        if (!response.ok) {
+          throw new Error(data.message || 'Login gagal');
+        }
+      
+        // Simpan user di Zustand store
+        setUser(data.user);
+        toast.success(`Selamat datang, ${data.user.username}!`);
+      
+        // ── LOGIKA REDIRECT BERDASARKAN ROLE ──────────────────────
+        const userRole = data.user.role;
+        const defaultDashboard = userRole === 'admin' ? '/admin/dashboard' : '/staff/dashboard';
+      
+        // Jika dari sistem awalnya mau diarahkan ke rute '/dashboard' lama atau halaman depan '/', 
+        // kita timpa dengan dashboard spesifik sesuai role. 
+        // Jika mereka sebelumnya sedang buka halaman lain (misal /staff/inventory), biarkan lanjut ke sana.
+        const targetRoute = (from === '/dashboard' || from === '/') ? defaultDashboard : from;
+      
+        navigate(targetRoute, { replace: true });
+        // ──────────────────────────────────────────────────────────
+        
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : 'Login gagal. Periksa email dan password Anda.'
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
   return (
     <div className="w-full max-w-sm mx-auto">

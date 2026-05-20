@@ -1,10 +1,10 @@
 import { Helmet } from 'react-helmet-async';
-import AppShell from '../components/layout/AppShell';
-import ReportsHeader from '../components/pages/reports/ReportsHeader';
-import ReportsMetrics from '../components/pages/reports/ReportsMetrics';
-import ReportsVolumeChart from '../components/pages/reports/ReportsVolumeChart';
-import ReportsStock from '../components/pages/reports/ReportsStock';
-import ReportsTable from '../components/pages/reports/ReportsTable';
+import AppShell from '../../components/layout/AppShell';
+import ReportsHeader from '../../components/pages/reports/ReportsHeader';
+import ReportsMetrics from '../../components/pages/reports/ReportsMetrics';
+import ReportsVolumeChart from '../../components/pages/reports/ReportsVolumeChart';
+import ReportsStock from '../../components/pages/reports/ReportsStock';
+import ReportsTable from '../../components/pages/reports/ReportsTable';
 
 export default function Reports() {
   return (

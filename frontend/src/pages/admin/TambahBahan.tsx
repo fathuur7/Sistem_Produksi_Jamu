@@ -1,14 +1,14 @@
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
-import AppShell from '../components/layout/AppShell';
-import InventoryTambahBahan from '../components/pages/inventory/InventoryTambahBahan';
+import AppShell from '../../components/layout/AppShell';
+import InventoryTambahBahan from '../../components/pages/inventory/InventoryTambahBahan';
 
 function TambahBahan() {
   const navigate = useNavigate();
 
   const handleSuccess = () => {
     setTimeout(() => {
-      navigate('/inventory');
+      navigate('/admin/inventory');
     }, 2000);
   };
 
@@ -49,7 +49,7 @@ function TambahBahan() {
 
               {/* Back Button */}
               <button
-                onClick={() => navigate('/inventory')}
+                onClick={() => navigate('/admin/inventory')}
                 className="flex items-center gap-2 text-primary hover:text-primary/80 font-semibold transition-colors"
               >
                 <span className="material-symbols-outlined">arrow_back</span>

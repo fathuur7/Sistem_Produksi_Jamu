@@ -1,9 +1,9 @@
 import { Helmet } from 'react-helmet-async';
-import AppShell from '../components/layout/AppShell';
-import InventoryHeader from '../components/pages/inventory/InventoryHeader';
-import InventoryTable from '../components/pages/inventory/InventoryTable';
-import InventoryBento from '../components/pages/inventory/InventoryBento';
-import { useInventoryTable } from '../hooks/useInventoryTable';
+import AppShell from '../../components/layout/AppShell';
+import InventoryHeader from '../../components/pages/inventory/InventoryHeader';
+import InventoryTable from '../../components/pages/inventory/InventoryTable';
+import InventoryBento from '../../components/pages/inventory/InventoryBento';
+import { useInventoryTable } from '../../hooks/useInventoryTable';
 
 export default function Inventory() {
   const inventory = useInventoryTable();

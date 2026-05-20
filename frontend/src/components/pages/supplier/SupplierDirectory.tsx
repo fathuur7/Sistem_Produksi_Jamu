@@ -1,7 +1,7 @@
 import { useDeferredValue, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import type { SupplierRecord } from '../../../pages/Supplier';
+import type { SupplierRecord } from '../../../pages/admin/Supplier';
 import { queryClient } from '../../../utils/queryClient';
 
 interface SupplierDirectoryProps {

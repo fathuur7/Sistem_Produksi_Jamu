@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 const sopSteps = [
   {
     step: 1,
@@ -19,7 +21,24 @@ const sopSteps = [
   }
 ];
 
-export default function SOPValidation() {
+export interface SOPValidationProps {
+  onExecute: () => Promise<void>;
+  blockingIssues?: string[];
+  executeError?: string | null;
+  disabled?: boolean;
+  isExecuting?: boolean;
+}
+
+export default function SOPValidation({
+  onExecute,
+  blockingIssues = [],
+  executeError,
+  disabled = false,
+  isExecuting = false,
+}: SOPValidationProps) {
+  const [confirmed, setConfirmed] = useState(false);
+  const canExecute = confirmed && !disabled && blockingIssues.length === 0;
+
   return (
     <div className="space-y-8 flex-1 flex flex-col">
       <section className="bg-surface-container-highest p-8 rounded-xl border border-outline-variant/20 shadow-sm flex-1 flex flex-col">
@@ -53,15 +72,38 @@ export default function SOPValidation() {
             <input 
               className="mt-1 w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary focus:ring-2 cursor-pointer transition-colors" 
               type="checkbox" 
+              checked={confirmed}
+              onChange={(e) => setConfirmed(e.target.checked)}
             />
             <span className="text-xs font-bold leading-relaxed text-on-surface-variant group-hover:text-on-surface transition-colors">
               Saya mengonfirmasi bahwa semua bahan telah ditimbang secara presisi sesuai dengan standar apoteker dan area produksi telah disanitasi.
             </span>
           </label>
         </div>
+
+        {(blockingIssues.length > 0 || executeError) && (
+          <div className="space-y-2 mb-6">
+            {blockingIssues.map((msg, idx) => (
+              <div key={idx} className="bg-secondary/10 border border-secondary/20 rounded-xl px-4 py-3 flex items-start gap-2">
+                <span className="material-symbols-outlined text-secondary text-sm mt-0.5" style={{ fontVariationSettings: "'FILL' 1" }}>info</span>
+                <p className="text-xs text-on-surface-variant/80 font-bold leading-relaxed">{msg}</p>
+              </div>
+            ))}
+            {executeError && (
+              <div className="bg-error/10 border border-error/20 rounded-xl px-4 py-3 flex items-start gap-2">
+                <span className="material-symbols-outlined text-error text-sm mt-0.5" style={{ fontVariationSettings: "'FILL' 1" }}>error</span>
+                <p className="text-xs text-error font-bold leading-relaxed">{executeError}</p>
+              </div>
+            )}
+          </div>
+        )}
         
-        <button className="w-full apothecary-gradient py-4 rounded-xl text-on-primary font-bold shadow-lg shadow-primary/20 hover:scale-[0.98] active:scale-95 transition-all flex items-center justify-center gap-2">
-          Validasi & Eksekusi
+        <button
+          onClick={() => onExecute()}
+          disabled={!canExecute || isExecuting}
+          className="w-full apothecary-gradient py-4 rounded-xl text-on-primary font-bold shadow-lg shadow-primary/20 hover:scale-[0.98] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isExecuting ? 'Mengeksekusi…' : 'Validasi & Eksekusi'}
           <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>
             check_circle
           </span>

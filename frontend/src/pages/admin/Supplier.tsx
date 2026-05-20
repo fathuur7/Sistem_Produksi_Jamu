@@ -1,9 +1,9 @@
 import { Helmet } from 'react-helmet-async';
 import { useState } from 'react';
-import AppShell from '../components/layout/AppShell';
-import SupplierHeader from '../components/pages/supplier/SupplierHeader';
-import SupplierMetrics from '../components/pages/supplier/SupplierMetrics';
-import SupplierDirectory from '../components/pages/supplier/SupplierDirectory';
+import AppShell from '../../components/layout/AppShell';
+import SupplierHeader from '../../components/pages/supplier/SupplierHeader';
+import SupplierMetrics from '../../components/pages/supplier/SupplierMetrics';
+import SupplierDirectory from '../../components/pages/supplier/SupplierDirectory';
 
 export interface SupplierRecord {
   id_produsen: number;

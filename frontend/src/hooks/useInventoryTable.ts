@@ -4,7 +4,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import type { BahanItem, InventoryItem, SaveBahanData, AdjustStockData } from '../types/inventory';
+import type { InventoryItem, SaveBahanData, AdjustStockData } from '../types/inventory';
 import { fetchBahanData, saveBahan, deleteBahan, adjustStock } from '../services/inventoryService';
 import { validateBahanForm } from '../utils/inventory';
 
@@ -36,7 +36,7 @@ export function useInventoryTable() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
-  const [editingItem, setEditingItem] = useState<BahanItem | null>(null);
+  const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [formData, setFormData] = useState<FormState>(initialFormState);
   const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; itemId: string | number | null; itemName: string }>({ isOpen: false, itemId: null, itemName: '' });
   const [restockModal, setRestockModal] = useState<{ isOpen: boolean; item: InventoryItem | null; value: string }>({ isOpen: false, item: null, value: '' });
@@ -99,15 +99,14 @@ export function useInventoryTable() {
 
   const openEditModal = (item: InventoryItem) => {
     setModalMode('edit');
-    const original = bahanData.find((b: BahanItem) => b.id === item.id);
-    setEditingItem(original || null);
+    setEditingItem(item);
     setFormData({
-      nama: original?.nama || '',
-      kategori: original?.kategori || '',
-      satuan: original?.satuan || '',
+      nama: item.name || '',
+      kategori: item.category || '',
+      satuan: item.unit || '',
       stokAwal: String(item.stock),
       threshold: String(item.threshold),
-      hargaSatuan: String(original?.hargaSatuan || 0),
+      hargaSatuan: String(item.hargaSatuan || 0),
     });
     setIsModalOpen(true);
   };
