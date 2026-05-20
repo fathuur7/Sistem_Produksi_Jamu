@@ -11,6 +11,7 @@ router.use('/bahan',     require('./bahan'));
 router.use('/inventory', require('./inventory'));
 router.use('/supplier',  require('./supplier'));
 router.use('/produksi',  require('./produksi'));
+router.use('/v2/produksi', require('./produksiV2'));
 router.use('/search',    require('./search'));
 
 module.exports = router;

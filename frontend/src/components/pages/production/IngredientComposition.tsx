@@ -83,9 +83,9 @@ export default function IngredientComposition({ rows, isLoading = false, error, 
           {/* Header */}
           <div className="grid grid-cols-12 gap-4 px-4 text-[10px] font-bold uppercase text-on-surface-variant/60 tracking-widest hidden sm:grid">
             <div className="col-span-12 sm:col-span-4">Nama Bahan</div>
-            <div className="col-span-12 sm:col-span-2">Target</div>
-            <div className="col-span-12 sm:col-span-2">Dipakai</div>
-            <div className="col-span-12 sm:col-span-2">Stok</div>
+            <div className="col-span-12 sm:col-span-2">Total Kebutuhan</div>
+            <div className="col-span-12 sm:col-span-2">Pengambilan Aktual</div>
+            <div className="col-span-12 sm:col-span-2">Stok Saat Ini</div>
             <div className="col-span-12 sm:col-span-2 text-right">Status</div>
           </div>
 

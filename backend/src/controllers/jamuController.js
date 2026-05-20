@@ -17,7 +17,7 @@ const getAll = async (req, res) => {
 
     const rows = await Jamu.findAll({
       where,
-      attributes: ['id_jamu', 'nama_jamu', 'ket_jamu', 'jenis', 'perizinan'],
+      attributes: ['id_jamu', 'nama_jamu', 'ket_jamu', 'jenis', 'perizinan', 'target_output', 'satuan_output'],
       include: [
         { model: User,     as: 'pembuat',  attributes: ['username'] },
         { model: Produsen, as: 'produsen', attributes: ['nama_produsen'] },

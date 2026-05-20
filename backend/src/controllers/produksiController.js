@@ -118,7 +118,7 @@ const getAll = async (req, res) => {
     const rows = await Produksi.findAll({
       where,
       include: [
-        { model: Jamu, as: 'jamu', attributes: ['nama_jamu', 'jenis'] },
+        { model: Jamu, as: 'jamu', attributes: ['nama_jamu', 'jenis', 'satuan_output'] },
         { model: User, as: 'operator', attributes: ['username'] },
       ],
       order: [['created_at', 'DESC']],
@@ -157,7 +157,7 @@ const getById = async (req, res) => {
   try {
     const row = await Produksi.findByPk(req.params.id, {
       include: [
-        { model: Jamu, as: 'jamu', attributes: ['nama_jamu', 'jenis', 'ket_jamu'] },
+        { model: Jamu, as: 'jamu', attributes: ['nama_jamu', 'jenis', 'ket_jamu', 'satuan_output'] },
         { model: User, as: 'operator', attributes: ['username'] },
       ],
     });
@@ -234,9 +234,28 @@ const advanceStatus = async (req, res) => {
 
     // Jika selesai, hitung efisiensi otomatis jika belum ada
     if (nextStatus === 'selesai' && !row.efisiensi && row.ukuran_batch) {
-      const volume = req.body.volume_output || row.volume_output || row.ukuran_batch * 0.85;
+      let targetOutput = null;
+      try {
+        const [jamuRows] = await row.sequelize.query(
+          'SELECT target_output FROM jamu WHERE id_jamu = :id_jamu',
+          {
+            replacements: { id_jamu: row.id_jamu },
+            type: row.sequelize.QueryTypes.SELECT
+          }
+        );
+        if (jamuRows && jamuRows.target_output) {
+          targetOutput = parseFloat(jamuRows.target_output);
+        }
+      } catch (e) {
+        console.error('Gagal mengambil target_output jamu:', e);
+      }
+
+      const defaultVol = targetOutput ? (targetOutput * parseFloat(row.ukuran_batch)) : (parseFloat(row.ukuran_batch) * 0.85);
+      const volume = req.body.volume_output || row.volume_output || defaultVol;
       updatePayload.volume_output = volume;
-      updatePayload.efisiensi = parseFloat(((volume / row.ukuran_batch) * 100).toFixed(2));
+
+      const baseForEfisiensi = targetOutput ? (targetOutput * parseFloat(row.ukuran_batch)) : parseFloat(row.ukuran_batch);
+      updatePayload.efisiensi = parseFloat(((volume / baseForEfisiensi) * 100).toFixed(2));
     }
 
     await Produksi.update(updatePayload, { where: { id_produksi: req.params.id } });

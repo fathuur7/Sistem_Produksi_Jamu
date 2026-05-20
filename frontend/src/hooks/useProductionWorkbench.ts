@@ -6,6 +6,8 @@ export interface JamuOption {
   nama_jamu: string;
   jenis?: string | null;
   perizinan?: string | null;
+  target_output?: number | null;
+  satuan_output?: string | null;
 }
 
 export interface ProdusenInfo {
@@ -21,8 +23,8 @@ export interface RequirementItem {
   id_rempah: number;
   nama_rempah: string;
   banyak_rempah: string | null;
-  target_per_kg: { qty: number; unit: string } | null;
-  target_total: { qty: number; unit: string } | null;
+  satuan_resep: string | null;
+  kebutuhan_total: number | null;
   bahan: {
     id: number;
     nama: string;
@@ -31,8 +33,8 @@ export interface RequirementItem {
     stok: number;
     threshold: number;
   } | null;
-  target_in_stock_unit: number | null;
-  remaining_stock: number | null;
+  kebutuhan_in_stok_unit: number | null;
+  sisa_stok_estimasi: number | null;
   status: 'OK' | 'LOW' | 'KURANG' | 'BUTUH INPUT' | 'TIDAK TERDAFTAR' | string;
 }
 
@@ -89,7 +91,7 @@ function formatNumber(value: number, digits = 2) {
 }
 
 async function fetchJamuList(): Promise<JamuOption[]> {
-  const res = await fetch('/api/jamu', { credentials: 'include' });
+  const res = await fetch('/api/v2/produksi/jamu', { credentials: 'include' });
   if (!res.ok) throw new Error('Gagal memuat daftar jamu');
   const json = await res.json();
   if (Array.isArray(json)) return json as JamuOption[];
@@ -99,7 +101,7 @@ async function fetchJamuList(): Promise<JamuOption[]> {
 
 async function fetchRequirements(id_jamu: number, ukuran_batch: number): Promise<ProductionRequirements> {
   const params = new URLSearchParams({ id_jamu: String(id_jamu), ukuran_batch: String(ukuran_batch) });
-  const res = await fetch(`/api/produksi/requirements?${params.toString()}`, { credentials: 'include' });
+  const res = await fetch(`/api/v2/produksi/requirements?${params.toString()}`, { credentials: 'include' });
   const json = await res.json();
   if (!res.ok) throw new Error(json.message ?? 'Gagal memuat kebutuhan bahan');
   return (json.data ?? json) as ProductionRequirements;
@@ -118,7 +120,7 @@ export interface ExecutePayload {
 }
 
 async function postExecute(payload: ExecutePayload) {
-  const res = await fetch('/api/produksi/execute', {
+  const res = await fetch('/api/v2/produksi/execute', {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
@@ -131,11 +133,11 @@ async function postExecute(payload: ExecutePayload) {
 
 export function useProductionWorkbench() {
   const [selectedJamuId, setSelectedJamuId] = useState<number | null>(null);
-  const [batchKg, setBatchKg] = useState<string>('5');
+  const [targetProduksiStr, setTargetProduksiStr] = useState<string>('');
   const [catatan, setCatatan] = useState<string>('');
 
-  const batchValue = Number(batchKg);
-  const batchValid = Number.isFinite(batchValue) && batchValue > 0;
+  const targetProduksi = Number(targetProduksiStr);
+  const isTargetValid = Number.isFinite(targetProduksi) && targetProduksi > 0;
 
   const jamuQuery = useQuery({
     queryKey: ['jamu-list-for-production'],
@@ -143,10 +145,24 @@ export function useProductionWorkbench() {
     staleTime: 60_000,
   });
 
+  const selectedJamu = useMemo(() => {
+    return jamuQuery.data?.find(j => j.id_jamu === selectedJamuId) ?? null;
+  }, [jamuQuery.data, selectedJamuId]);
+
+  const multiplier = useMemo(() => {
+    if (!isTargetValid) return null;
+    if (selectedJamu && selectedJamu.target_output) {
+      return targetProduksi / selectedJamu.target_output;
+    }
+    return targetProduksi; // Fallback jika tidak ada base output
+  }, [targetProduksi, isTargetValid, selectedJamu]);
+
+  const isMultiplierValid = multiplier !== null && multiplier > 0;
+
   const reqQuery = useQuery({
-    queryKey: ['produksi-requirements', selectedJamuId, batchValue],
-    queryFn: () => fetchRequirements(selectedJamuId!, batchValue),
-    enabled: !!selectedJamuId && batchValid,
+    queryKey: ['produksi-requirements', selectedJamuId, multiplier],
+    queryFn: () => fetchRequirements(selectedJamuId!, multiplier!),
+    enabled: !!selectedJamuId && isMultiplierValid,
   });
 
   // Inputs per bahan (key = bahanId)
@@ -159,7 +175,7 @@ export function useProductionWorkbench() {
     for (const item of reqQuery.data.komposisi_detail ?? []) {
       if (!item.bahan?.id) continue;
       const unit = String(item.bahan.satuan ?? '').trim() || 'kg';
-      const defaultQty = item.target_in_stock_unit;
+      const defaultQty = item.kebutuhan_in_stok_unit;
       next[item.bahan.id] = {
         qty: defaultQty != null && Number.isFinite(defaultQty) ? String(Number(defaultQty.toFixed(2))) : '',
         unit,
@@ -213,7 +229,7 @@ export function useProductionWorkbench() {
         status,
         display: {
           stock: stock != null && stockUnit ? `${formatNumber(stock, 2)} ${stockUnit}` : '—',
-          target: item.target_total ? `${formatNumber(item.target_total.qty, 2)} ${item.target_total.unit}` : '—',
+          target: item.kebutuhan_total != null ? `${formatNumber(item.kebutuhan_total, 2)} ${item.satuan_resep || ''}` : '—',
           remaining: remaining != null && stockUnit ? `${formatNumber(remaining, 2)} ${stockUnit}` : '—',
           usedHint: massToG != null && Number.isFinite(massToG) ? `${formatNumber(massToG, 0)} g` : null,
         },
@@ -239,7 +255,7 @@ export function useProductionWorkbench() {
 
   async function executeBatch() {
     if (!selectedJamuId) throw new Error('Pilih jamu terlebih dulu');
-    if (!batchValid) throw new Error('Ukuran batch tidak valid');
+    if (!isTargetValid || !isMultiplierValid) throw new Error('Target produksi tidak valid');
     if (!reqQuery.data) throw new Error('Kebutuhan bahan belum dimuat');
 
     const materials: ExecutePayload['materials'] = [];
@@ -253,7 +269,7 @@ export function useProductionWorkbench() {
 
     const payload: ExecutePayload = {
       id_jamu: selectedJamuId,
-      ukuran_batch: batchValue,
+      ukuran_batch: multiplier,
       catatan: catatan || undefined,
       materials,
     };
@@ -278,10 +294,12 @@ export function useProductionWorkbench() {
 
     selectedJamuId,
     setSelectedJamuId,
-    batchKg,
-    setBatchKg,
-    batchValue,
-    batchValid,
+    selectedJamu,
+    targetProduksiStr,
+    setTargetProduksiStr,
+    targetProduksi,
+    isTargetValid,
+    multiplier,
     catatan,
     setCatatan,
 
