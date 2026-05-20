@@ -76,7 +76,7 @@ export default function ReportsTable() {
         )}
 
         {!isLoading && !error && batches.length > 0 && (
-          <table className="w-full text-left border-collapse min-w-[700px]">
+          <table className="w-full text-left border-collapse" style={{ minWidth: '700px' }}>
             <thead>
               <tr className="bg-surface-container-low text-on-surface-variant/80 text-xs font-bold uppercase tracking-widest border-b border-outline-variant/10">
                 <th className="px-8 py-5">ID Batch</th>

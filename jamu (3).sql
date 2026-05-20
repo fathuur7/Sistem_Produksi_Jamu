@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Waktu pembuatan: 20 Bulan Mei 2026 pada 09.58
+-- Waktu pembuatan: 20 Bulan Mei 2026 pada 13.25
 -- Versi server: 8.4.3
 -- Versi PHP: 8.3.26
 
@@ -46,7 +46,9 @@ CREATE TABLE `bahan` (
 INSERT INTO `bahan` (`id`, `nama`, `kategori`, `satuan`, `stokAwal`, `hargaSatuan`, `threshold`, `created_at`, `updated_at`) VALUES
 (1, 'Jahe Merah Segar', 'Rimpang', 'kg', 150.00, 25000.00, 20.00, '2026-05-20 06:43:13', '2026-05-20 06:43:13'),
 (2, 'Kunyit Bubuk', 'Rimpang', 'kg', 80.00, 30000.00, 15.00, '2026-05-20 06:43:13', '2026-05-20 06:43:13'),
-(3, 'jahe', 'rempah', 'kg', 35.00, 4000.00, 20.00, '2026-05-20 09:34:45', '2026-05-20 09:34:45');
+(3, 'jahe', 'rempah', 'kg', 35.00, 4000.00, 20.00, '2026-05-20 09:34:45', '2026-05-20 09:34:45'),
+(4, 'Jahe Merah', 'Rempah', 'kg', 0.00, 0.00, 0.00, '2026-05-20 20:18:28', '2026-05-20 20:18:28'),
+(5, 'Kunyit', 'Rempah', 'kg', 0.00, 0.00, 0.00, '2026-05-20 20:18:28', '2026-05-20 20:18:28');
 
 -- --------------------------------------------------------
 
@@ -62,15 +64,20 @@ CREATE TABLE `jamu` (
   `jenis` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `perizinan` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `id_produsen` int DEFAULT NULL,
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `aturan_pakai` text COLLATE utf8mb4_unicode_ci COMMENT 'Aturan penggunaan atau aturan minum',
+  `kandungan` text COLLATE utf8mb4_unicode_ci COMMENT 'Kandungan kimia atau komposisi makro tambahan',
+  `lokasi_produksi` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `target_output` int DEFAULT NULL COMMENT 'Estimasi hasil botol/pcs dari 1x resep',
+  `satuan_output` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'misal: botol, sachet, kg, ml'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data untuk tabel `jamu`
 --
 
-INSERT INTO `jamu` (`id_jamu`, `id_user`, `nama_jamu`, `ket_jamu`, `jenis`, `perizinan`, `id_produsen`, `created_at`) VALUES
-(1, 1, 'Jamu Jahe Merah Kunyit', 'Minuman herbal', 'minuman', 'BPOM', 1, '2026-05-20 06:43:13');
+INSERT INTO `jamu` (`id_jamu`, `id_user`, `nama_jamu`, `ket_jamu`, `jenis`, `perizinan`, `id_produsen`, `created_at`, `aturan_pakai`, `kandungan`, `lokasi_produksi`, `target_output`, `satuan_output`) VALUES
+(1, 1, 'Jamu Jahe Merah Kunyit', 'Minuman herbal', 'minuman', 'BPOM', 1, '2026-05-20 06:43:13', NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -120,18 +127,11 @@ INSERT INTO `khasiat_jamu` (`id_khasiat_jamu`, `id_khasiat`, `id_jamu`) VALUES
 
 CREATE TABLE `komposisi` (
   `id_komposisi` int NOT NULL,
-  `id_rempah` int NOT NULL,
   `id_jamu` int NOT NULL,
-  `banyak_rempah` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL
+  `id_bahan` int NOT NULL,
+  `kebutuhan` decimal(10,2) NOT NULL COMMENT 'Takaran angka pasti, misal: 2.50',
+  `satuan_kebutuhan` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'kg, gram, pcs, lembar, ml'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data untuk tabel `komposisi`
---
-
-INSERT INTO `komposisi` (`id_komposisi`, `id_rempah`, `id_jamu`, `banyak_rempah`) VALUES
-(1, 1, 1, '200 gram'),
-(2, 2, 1, '150 gram');
 
 -- --------------------------------------------------------
 
@@ -210,26 +210,6 @@ INSERT INTO `produsen` (`id_produsen`, `nama_produsen`, `alamat`, `kota`, `konta
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `rempah`
---
-
-CREATE TABLE `rempah` (
-  `id_rempah` int NOT NULL,
-  `nama_rempah` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `ket_rempah` text COLLATE utf8mb4_unicode_ci
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data untuk tabel `rempah`
---
-
-INSERT INTO `rempah` (`id_rempah`, `nama_rempah`, `ket_rempah`) VALUES
-(1, 'Jahe Merah', 'Zingiber officinale var. rubrum'),
-(2, 'Kunyit', 'Curcuma longa');
-
--- --------------------------------------------------------
-
---
 -- Struktur dari tabel `user`
 --
 
@@ -288,8 +268,8 @@ ALTER TABLE `khasiat_jamu`
 --
 ALTER TABLE `komposisi`
   ADD PRIMARY KEY (`id_komposisi`),
-  ADD KEY `id_rempah` (`id_rempah`),
-  ADD KEY `id_jamu` (`id_jamu`);
+  ADD KEY `id_jamu` (`id_jamu`),
+  ADD KEY `fk_komposisi_bahan` (`id_bahan`);
 
 --
 -- Indeks untuk tabel `kota`
@@ -313,12 +293,6 @@ ALTER TABLE `produsen`
   ADD PRIMARY KEY (`id_produsen`);
 
 --
--- Indeks untuk tabel `rempah`
---
-ALTER TABLE `rempah`
-  ADD PRIMARY KEY (`id_rempah`);
-
---
 -- Indeks untuk tabel `user`
 --
 ALTER TABLE `user`
@@ -335,7 +309,7 @@ ALTER TABLE `user`
 -- AUTO_INCREMENT untuk tabel `bahan`
 --
 ALTER TABLE `bahan`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT untuk tabel `jamu`
@@ -359,7 +333,7 @@ ALTER TABLE `khasiat_jamu`
 -- AUTO_INCREMENT untuk tabel `komposisi`
 --
 ALTER TABLE `komposisi`
-  MODIFY `id_komposisi` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id_komposisi` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT untuk tabel `kota`
@@ -378,12 +352,6 @@ ALTER TABLE `produksi`
 --
 ALTER TABLE `produsen`
   MODIFY `id_produsen` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT untuk tabel `rempah`
---
-ALTER TABLE `rempah`
-  MODIFY `id_rempah` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT untuk tabel `user`
@@ -413,7 +381,7 @@ ALTER TABLE `khasiat_jamu`
 -- Ketidakleluasaan untuk tabel `komposisi`
 --
 ALTER TABLE `komposisi`
-  ADD CONSTRAINT `komposisi_ibfk_1` FOREIGN KEY (`id_rempah`) REFERENCES `rempah` (`id_rempah`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_komposisi_bahan` FOREIGN KEY (`id_bahan`) REFERENCES `bahan` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `komposisi_ibfk_2` FOREIGN KEY (`id_jamu`) REFERENCES `jamu` (`id_jamu`) ON DELETE CASCADE;
 
 --

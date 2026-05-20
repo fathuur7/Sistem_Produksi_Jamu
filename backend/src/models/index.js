@@ -25,16 +25,16 @@ User.hasMany(Jamu,       { foreignKey: 'id_user' });
 Jamu.belongsTo(Produsen, { foreignKey: 'id_produsen', as: 'produsen' });
 Produsen.hasMany(Jamu,   { foreignKey: 'id_produsen' });
 
-// Jamu ↔ Rempah (many-to-many via komposisi)
-Jamu.belongsToMany(Rempah, {
+// Jamu ↔ Bahan (many-to-many via komposisi)
+Jamu.belongsToMany(Bahan, {
   through: Komposisi,
   foreignKey: 'id_jamu',
-  otherKey: 'id_rempah',
+  otherKey: 'id_bahan',
   as: 'komposisi',
 });
-Rempah.belongsToMany(Jamu, {
+Bahan.belongsToMany(Jamu, {
   through: Komposisi,
-  foreignKey: 'id_rempah',
+  foreignKey: 'id_bahan',
   otherKey: 'id_jamu',
 });
 

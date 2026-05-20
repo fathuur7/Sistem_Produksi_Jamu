@@ -15,7 +15,7 @@ export default function Reports() {
       </Helmet>
 
       <AppShell>
-        <main className="p-4 sm:p-6 md:p-10 max-w-[1400px] w-full mx-auto space-y-10 pb-24">
+        <main className="p-4 sm:p-6 md:p-10 w-full mx-auto space-y-10 pb-24" style={{ maxWidth: '1400px' }}>
           <ReportsHeader />
           <ReportsMetrics />
 
