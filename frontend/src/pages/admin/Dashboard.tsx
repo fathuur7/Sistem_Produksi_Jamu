@@ -1,9 +1,9 @@
 import { Helmet } from 'react-helmet-async';
-import AppShell from '../components/layout/AppShell';
-import DashboardMetrics from '../components/pages/dashboard/DashboardMetrics';
-import ActiveCycle from '../components/pages/dashboard/ActiveCycle';
-import SpiceStock from '../components/pages/dashboard/SpiceStock';
-import ProductionQueue from '../components/pages/dashboard/ProductionQueue';
+import AppShell from '../../components/layout/AppShell';
+import DashboardMetrics from '../../components/pages/dashboard/DashboardMetrics';
+import ActiveCycle from '../../components/pages/dashboard/ActiveCycle';
+import SpiceStock from '../../components/pages/dashboard/SpiceStock';
+import ProductionQueue from '../../components/pages/dashboard/ProductionQueue';
 
 export default function Dashboard() {
   return (

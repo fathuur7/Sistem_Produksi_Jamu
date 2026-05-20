@@ -28,6 +28,7 @@ export interface InventoryItem {
   stock: number;
   threshold: number;
   unit: string;
+  hargaSatuan?: number;
   status: string;
   icon: string;
   bgColor: string;

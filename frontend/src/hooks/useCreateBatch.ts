@@ -23,7 +23,13 @@ async function fetchJamuList(): Promise<JamuOption[]> {
   const res = await fetch('/api/jamu', { credentials: 'include' });
   if (!res.ok) throw new Error('Gagal memuat daftar jamu');
   const json = await res.json();
-  return Array.isArray(json.data) ? json.data : [];
+
+  // Backend saat ini mengembalikan array langsung (dipakai halaman Recipes),
+  // namun beberapa area frontend sebelumnya mengasumsikan format { data: [] }.
+  // Dukungan keduanya agar tidak memecah fitur lain.
+  if (Array.isArray(json)) return json as JamuOption[];
+  if (json && Array.isArray((json as any).data)) return (json as any).data as JamuOption[];
+  return [];
 }
 
 async function postCreateBatch(payload: CreateBatchPayload): Promise<CreatedBatch> {

@@ -34,9 +34,10 @@ const getAll = async (req, res) => {
 const getById = async (req, res) => {
   try {
     const jamu = await Jamu.findByPk(req.params.id, {
-      attributes: ['id_jamu', 'nama_jamu', 'ket_jamu'],
+      attributes: ['id_jamu', 'nama_jamu', 'ket_jamu', 'jenis', 'perizinan'],
       include: [
         { model: User, as: 'pembuat', attributes: ['username'] },
+        { model: Produsen, as: 'produsen', attributes: ['nama_produsen', 'alamat', 'kota', 'kontak', 'email', 'status'] },
         {
           model: Rempah,
           as: 'komposisi',
@@ -52,7 +53,15 @@ const getById = async (req, res) => {
       ],
     });
     if (!jamu) return res.status(404).json({ message: 'Jamu tidak ditemukan' });
-    res.json(jamu);
+    const json = jamu.toJSON();
+    if (Array.isArray(json.komposisi)) {
+      json.komposisi = json.komposisi.map((item) => ({
+        id_rempah: item.id_rempah,
+        nama_rempah: item.nama_rempah,
+        banyak_rempah: item?.Komposisi?.banyak_rempah ?? null,
+      }));
+    }
+    res.json(json);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

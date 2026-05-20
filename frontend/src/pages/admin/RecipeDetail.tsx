@@ -1,9 +1,9 @@
 import { Helmet } from 'react-helmet-async';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import AppShell from '../components/layout/AppShell';
-import { getRecipeImage } from '../components/pages/recipes/recipeImage';
-import Image from '../components/Image';
+import AppShell from '../../components/layout/AppShell';
+import { getRecipeImage } from '../../components/pages/recipes/recipeImage';
+import Image from '../../components/Image';
 
 interface Komposisi {
   id_rempah: number;

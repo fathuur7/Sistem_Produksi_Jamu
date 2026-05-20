@@ -32,6 +32,7 @@ export async function fetchBahanData(): Promise<InventoryItem[]> {
         stock,
         threshold,
         unit: item.satuan || 'kg',
+        hargaSatuan: Number(item.hargaSatuan) || 0,
         status,
         icon: statusStyles.icon,
         bgColor: statusStyles.bgColor,

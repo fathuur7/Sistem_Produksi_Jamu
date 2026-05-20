@@ -1,8 +1,8 @@
 import { Helmet } from 'react-helmet-async';
-import AppShell from '../components/layout/AppShell';
-import RecipesHeader from '../components/pages/recipes/RecipesHeader';
-import RecipeGrid from '../components/pages/recipes/RecipeGrid';
-import RecipeStats from '../components/pages/recipes/RecipeStats';
+import AppShell from '../../components/layout/AppShell';
+import RecipesHeader from '../../components/pages/recipes/RecipesHeader';
+import RecipeGrid from '../../components/pages/recipes/RecipeGrid';
+import RecipeStats from '../../components/pages/recipes/RecipeStats';
 
 export default function Recipes() {
   return (

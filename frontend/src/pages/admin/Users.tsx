@@ -2,13 +2,13 @@ import { Helmet } from 'react-helmet-async';
 import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import AppShell from '../components/layout/AppShell';
-import UsersHeader from '../components/pages/users/UsersHeader';
-import UsersMetrics from '../components/pages/users/UsersMetrics';
-import UsersTable from '../components/pages/users/UsersTable';
-import UsersFooter from '../components/pages/users/UsersFooter';
-import UsersDialog, { type UserFormState } from '../components/pages/users/UsersDialog';
-import UsersDeleteDialog from '../components/pages/users/UsersDeleteDialog';
+import AppShell from '../../components/layout/AppShell';
+import UsersHeader from '../../components/pages/users/UsersHeader';
+import UsersMetrics from '../../components/pages/users/UsersMetrics';
+import UsersTable from '../../components/pages/users/UsersTable';
+import UsersFooter from '../../components/pages/users/UsersFooter';
+import UsersDialog, { type UserFormState } from '../../components/pages/users/UsersDialog';
+import UsersDeleteDialog from '../../components/pages/users/UsersDeleteDialog';
 import {
   createUser,
   deleteUser,
@@ -17,9 +17,9 @@ import {
   updateUser,
   updateUserPassword,
   type UserRecord,
-} from '../services/userService';
-import { queryClient } from '../utils/queryClient';
-import { useAuthStore } from '../store/useAuthStore';
+} from '../../services/userService';
+import { queryClient } from '../../utils/queryClient';
+import { useAuthStore } from '../../store/useAuthStore';
 
 const initialFormState: UserFormState = {
   username: '',

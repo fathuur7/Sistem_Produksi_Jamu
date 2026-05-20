@@ -11,21 +11,26 @@ const ForgotPassword = lazy(() => import('../pages/ForgotPassword'));
 const NotFound       = lazy(() => import('../pages/NotFound'));
 const Forbidden      = lazy(() => import('../pages/Forbidden'));
 
-// ── Protected pages ───────────────────────────────────────────
-const Dashboard      = lazy(() => import('../pages/Dashboard'));
-const Inventory      = lazy(() => import('../pages/Inventory'));
-const TambahBahan    = lazy(() => import('../pages/TambahBahan'));
-const Production     = lazy(() => import('../pages/Production'));
-const Recipes        = lazy(() => import('../pages/Recipes'));
-const RecipeDetail   = lazy(() => import('../pages/RecipeDetail'));
-const Supplier       = lazy(() => import('../pages/Supplier'));
-const Reports        = lazy(() => import('../pages/Reports'));
-const Settings       = lazy(() => import('../pages/Settings'));
+// ── Shared Protected pages ────────────────────────────────────
 const SearchResults  = lazy(() => import('../pages/SearchResults'));
 const Notifications  = lazy(() => import('../pages/Notifications'));
-const Users          = lazy(() => import('../pages/Users'));
-const Cities         = lazy(() => import('../pages/Cities'));
-// const Benefits       = lazy(() => import('../pages/Benefits'));
+
+// ── Staff pages ───────────────────────────────────────────────
+const DashboardStaff = lazy(() => import('../pages/staff/Dashboard'));
+const Production     = lazy(() => import('../pages/staff/Production'));
+const SettingsStaff  = lazy(() => import('../pages/staff/Settings'));
+
+// ── Admin pages ───────────────────────────────────────────────
+const DashboardAdmin = lazy(() => import('../pages/admin/Dashboard'));
+const Inventory      = lazy(() => import('../pages/admin/Inventory'));
+const TambahBahan = lazy(() => import('../pages/admin/TambahBahan'));
+const Recipes        = lazy(() => import('../pages/admin/Recipes'));
+const RecipeDetail   = lazy(() => import('../pages/admin/RecipeDetail'));
+const Supplier       = lazy(() => import('../pages/admin/Supplier'));
+const Reports        = lazy(() => import('../pages/admin/Reports'));
+const Users          = lazy(() => import('../pages/admin/Users'));
+const Cities         = lazy(() => import('../pages/admin/Cities'));
+const SettingsAdmin  = lazy(() => import('../pages/admin/Settings'));
 
 // ── Loading spinner ───────────────────────────────────────────
 const LazyLoad = ({ children }: { children: React.ReactNode }) => (
@@ -44,13 +49,7 @@ const LazyLoad = ({ children }: { children: React.ReactNode }) => (
 );
 
 // ── Protected shorthand ───────────────────────────────────────
-const Protected = ({
-  children,
-  allowedRoles,
-}: {
-  children: React.ReactNode;
-  allowedRoles?: ('admin' | 'supervisor' | 'staff')[];
-}) => (
+const Protected = ({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: ('admin' | 'staff')[] }) => (
   <LazyLoad>
     <PrivateRoute allowedRoles={allowedRoles}>
       {children}
@@ -58,8 +57,6 @@ const Protected = ({
   </LazyLoad>
 );
 
-// ── Root layout: AuthProvider membungkus semua route ─────────
-// fetchMe() dipanggil sekali saat app mount di sini.
 function RootLayout() {
   return (
     <AuthProvider>
@@ -71,95 +68,33 @@ function RootLayout() {
 // ── Router ────────────────────────────────────────────────────
 const router = createBrowserRouter([
   {
-    element: <RootLayout />, // semua route inherit dari sini
+    element: <RootLayout />, 
     children: [
-      // ── Public routes ──────────────────────────────────────
-      {
-        path: '/',
-        element: <LazyLoad><Login /></LazyLoad>,
-      },
-      {
-        path: '/request-access',
-        element: <LazyLoad><RequestAccess /></LazyLoad>,
-      },
-      {
-        path: '/forgot-password',
-        element: <LazyLoad><ForgotPassword /></LazyLoad>,
-      },
-      {
-        path: '/unauthorized',
-        element: <LazyLoad><Forbidden /></LazyLoad>,
-      },
+      { path: '/', element: <LazyLoad><Login /></LazyLoad> },
+      { path: '/request-access', element: <LazyLoad><RequestAccess /></LazyLoad> },
+      { path: '/forgot-password', element: <LazyLoad><ForgotPassword /></LazyLoad> },
+      { path: '/unauthorized', element: <LazyLoad><Forbidden /></LazyLoad> },
+      { path: '/search', element: <Protected><SearchResults /></Protected> },
+      { path: '/notifications', element: <Protected><Notifications /></Protected> },
 
-      // ── Protected routes ────────────────────────────────────
-      {
-        path: '/dashboard',
-        element: <Protected><Dashboard /></Protected>,
-      },
-      {
-        path: '/inventory',
-        element: <Protected><Inventory /></Protected>,
-      },
-      {
-        path: '/inventory/tambah-bahan',
-        element: <Protected><TambahBahan /></Protected>,
-      },
-      {
-        path: '/production',
-        element: <Protected><Production /></Protected>,
-      },
-      {
-        path: '/recipes',
-        element: <Protected><Recipes /></Protected>,
-      },
-      {
-        path: '/recipes/:id',
-        element: <Protected><RecipeDetail /></Protected>,
-      },
-      {
-        path: '/supplier',
-        element: <Protected><Supplier /></Protected>,
-      },
-      {
-        path: '/reports',
-        element: <Protected><Reports /></Protected>,
-      },
-      {
-        path: '/settings',
-        element: <Protected><Settings /></Protected>,
-      },
-      {
-        path: '/search',
-        element: <Protected><SearchResults /></Protected>,
-      },
-      {
-        path: '/notifications',
-        element: <Protected><Notifications /></Protected>,
-      },
-      {
-        path: '/cities',
-        element: <Protected><Cities /></Protected>,
-      },
-      // {
-      //   path: '/benefits',
-      //   element: <Protected><Benefits /></Protected>,
-      // },
+      // ── Murni Staff ──
+      { path: '/staff/dashboard', element: <Protected allowedRoles={['staff']}><DashboardStaff /></Protected> },
+      { path: '/staff/production', element: <Protected allowedRoles={['staff']}><Production /></Protected> },
+      { path: '/staff/settings', element: <Protected allowedRoles={['staff']}><SettingsStaff /></Protected> },
 
-      // ── Admin-only ──────────────────────────────────────────
-      {
-        path: '/users',
-        element: (
-          <Protected allowedRoles={['admin']}>
-            <Users />
-          </Protected>
-        ),
-      },
+      // ── Murni Admin ──
+      { path: '/admin/dashboard', element: <Protected allowedRoles={['admin']}><DashboardAdmin /></Protected> },
+      { path: '/admin/inventory', element: <Protected allowedRoles={['admin']}><Inventory /></Protected> },
+      { path: '/admin/inventory/tambah-bahan', element: <Protected allowedRoles={['admin']}><TambahBahan /></Protected> },
+      { path: '/admin/recipes', element: <Protected allowedRoles={['admin']}><Recipes /></Protected> },
+      { path: '/admin/recipes/:id', element: <Protected allowedRoles={['admin']}><RecipeDetail /></Protected> },
+      { path: '/admin/supplier', element: <Protected allowedRoles={['admin']}><Supplier /></Protected> },
+      { path: '/admin/reports', element: <Protected allowedRoles={['admin']}><Reports /></Protected> },
+      { path: '/admin/users', element: <Protected allowedRoles={['admin']}><Users /></Protected> },
+      { path: '/admin/cities', element: <Protected allowedRoles={['admin']}><Cities /></Protected> },
+      { path: '/admin/settings', element: <Protected allowedRoles={['admin']}><SettingsAdmin /></Protected> },
 
-      // ── 404 ────────────────────────────────────────────────
-      {
-        path: '*',
-        element: <LazyLoad><NotFound /></LazyLoad>,
-      },
+      { path: '*', element: <LazyLoad><NotFound /></LazyLoad> },
     ],
   },
 ]);
